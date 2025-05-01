@@ -61,7 +61,7 @@ const Home: NextPage = ({ images }: { images: ImageProps[] }) => {
               target="_blank"
               rel="noreferrer"
             >
-              Sugerir uma melhoria
+              Sugerir uma melhoria.
             </a>
           </div>
           {images.map(({ id, public_id, format, blurDataUrl }) => (
