@@ -56,10 +56,10 @@ const GalleryPage: NextPage<Props> = ({ images, slug }) => {
               <span className="absolute left-0 right-0 bottom-0 h-[400px] bg-gradient-to-b from-black/0 via-black to-black"></span>
             </div>
             <Logo />
-            <h1 className="mt-8 mb-4 text-base font-bold uppercase tracking-widest">
+            <h1 className="text-base font-bold uppercase tracking-widest">
               Issacar Pictures Beta¹
             </h1>
-            <h3 className="mt-8 mb-4 text-base font-bold uppercase tracking-widest">
+            <h3 className="mt-2 text-base font-bold uppercase tracking-widest">
               Album: {slug.replace(/_/g, ' ')}</h3>
             <p className="max-w-[40ch] text-white/75 sm:max-w-[32ch]">
               Esse aplicativo é um piloto para o nosso site, onde você poderá visualizar as fotos dos cultos da Igreja. você pode sugerir melhorias que serão consideradas
