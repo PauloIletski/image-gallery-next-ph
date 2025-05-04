@@ -29,7 +29,7 @@ const Home: NextPage = ({ images }: { images: ImageProps[] }) => {
       </Head>
       <main className="mx-auto max-w-[1960px] p-4">
         <>
-          <div>
+          <div className="text-white/80">
             Futura home
           </div>
         </>

@@ -59,6 +59,8 @@ const GalleryPage: NextPage<Props> = ({ images, slug }) => {
             <h1 className="mt-8 mb-4 text-base font-bold uppercase tracking-widest">
               Issacar Pictures Beta¹
             </h1>
+            <h3 className="mt-8 mb-4 text-base font-bold uppercase tracking-widest">
+              Album: {slug.replace(/_/g, ' ')}</h3>
             <p className="max-w-[40ch] text-white/75 sm:max-w-[32ch]">
               Esse aplicativo é um piloto para o nosso site, onde você poderá visualizar as fotos dos cultos da Igreja. você pode sugerir melhorias que serão consideradas
               no lançamento oficial no site.
@@ -127,7 +129,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   const slug = params?.slug as string;
 
   const results = await cloudinary.v2.search
-    .expression(`folder:${slug}/*`)
+    .expression(`folder:galeries/${slug}/*`)
     .sort_by('public_id', 'desc')
     .max_results(400)
     .execute();
