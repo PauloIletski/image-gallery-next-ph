@@ -1,22 +1,28 @@
-import type { NextPage } from "next";
-import Head from "next/head";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/router";
-import { useEffect, useRef } from "react";
-import Logo from "../components/Icons/Logo";
-import Modal from "../components/Modal";
-import cloudinary from "../utils/cloudinary";
-import getBase64ImageUrl from "../utils/generateBlurPlaceholder";
-import type { ImageProps } from "../utils/types";
-import { useLastViewedPhoto } from "../utils/useLastViewedPhoto";
+import { GetStaticPaths, GetStaticProps, NextPage } from 'next';
+import Head from 'next/head';
+import Image from 'next/image';
+import Link from 'next/link';
+import cloudinary from '../../../utils/cloudinary';
+import getBase64ImageUrl from '../../../utils/generateBlurPlaceholder';
+import type { ImageProps } from '../../../utils/types';
+import { useRouter } from 'next/router';
+import { useLastViewedPhoto } from '../../../utils/useLastViewedPhoto';
+import { useEffect, useRef } from 'react';
+import Modal from '../../../components/Modal';
+import Logo from '../../../components/Icons/Logo';
 
-const Home: NextPage = ({ images }: { images: ImageProps[] }) => {
+interface Props {
+  images: ImageProps[];
+  slug: string;
+}
+
+const GalleryPage: NextPage<Props> = ({ images, slug }) => {
+
   const router = useRouter();
-  const { photoId } = router.query;
-  const [lastViewedPhoto, setLastViewedPhoto] = useLastViewedPhoto();
+    const { photoId } = router.query;
+    const [lastViewedPhoto, setLastViewedPhoto] = useLastViewedPhoto();
 
-  const lastViewedPhotoRef = useRef<HTMLAnchorElement>(null);
+    const lastViewedPhotoRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     // This effect keeps track of the last viewed photo in the modal to keep the index page in sync when the user navigates back
@@ -25,8 +31,9 @@ const Home: NextPage = ({ images }: { images: ImageProps[] }) => {
       setLastViewedPhoto(null);
     }
   }, [photoId, lastViewedPhoto, setLastViewedPhoto]);
-
   return (
+
+
     <>
       <Head>
         <title>Issacar Pictures BETA¹</title>
@@ -35,7 +42,7 @@ const Home: NextPage = ({ images }: { images: ImageProps[] }) => {
         {photoId && (
           <Modal
             images={images}
-            slug="/banana"
+            slug={slug}
             onClose={() => {
               setLastViewedPhoto(photoId);
             }}
@@ -68,8 +75,7 @@ const Home: NextPage = ({ images }: { images: ImageProps[] }) => {
           {images.map(({ id, public_id, format, blurDataUrl }) => (
             <Link
               key={id}
-              href={`/?photoId=${id}`}
-              as={`/p/${id}`}
+              href={`/issacar-galeries/${slug}/?photoId=${id}`}
               ref={id === Number(lastViewedPhoto) ? lastViewedPhotoRef : null}
               shallow
               className="after:content group relative mb-5 block w-full cursor-zoom-in after:pointer-events-none after:absolute after:inset-0 after:rounded-lg after:shadow-highlight"
@@ -95,44 +101,57 @@ const Home: NextPage = ({ images }: { images: ImageProps[] }) => {
       <footer className="p-6 text-center text-white/80 sm:p-12">
         <a href="https://issacar.deco.site">Issacar Church</a> &copy; {new Date().getFullYear()}{" "}
       </footer>
+
     </>
   );
 };
 
-export default Home;
+export default GalleryPage;
 
-export async function getStaticProps() {
+export const getStaticPaths: GetStaticPaths = async () => {
+  const { folders } = await cloudinary.v2.api.sub_folders(process.env.CLOUDINARY_ROOT_FOLDER || '');
+
+  const paths = folders.map((folder: any) => ({
+    params: { slug: folder.name },
+  }));
+
+  return { paths, fallback: 'blocking' };
+};
+
+export const getStaticProps: GetStaticProps = async ({ params }) => {
+  const slug = params?.slug as string;
+
   const results = await cloudinary.v2.search
-    .expression(`folder:${process.env.CLOUDINARY_FOLDER}/*`)
-    .sort_by("public_id", "desc")
+    .expression(`folder:${slug}/*`)
+    .sort_by('public_id', 'desc')
     .max_results(400)
     .execute();
-  let reducedResults: ImageProps[] = [];
 
+  let images: ImageProps[] = [];
   let i = 0;
+
   for (let result of results.resources) {
-    reducedResults.push({
-      id: i,
+    images.push({
+      id: i++,
       height: result.height,
       width: result.width,
       public_id: result.public_id,
       format: result.format,
     });
-    i++;
   }
 
-  const blurImagePromises = results.resources.map((image: ImageProps) => {
-    return getBase64ImageUrl(image);
-  });
+  const blurImagePromises = images.map((image: ImageProps) => getBase64ImageUrl(image));
   const imagesWithBlurDataUrls = await Promise.all(blurImagePromises);
 
-  for (let i = 0; i < reducedResults.length; i++) {
-    reducedResults[i].blurDataUrl = imagesWithBlurDataUrls[i];
+  for (let i = 0; i < images.length; i++) {
+    images[i].blurDataUrl = imagesWithBlurDataUrls[i];
   }
 
   return {
     props: {
-      images: reducedResults,
+      images,
+      slug,
     },
+    revalidate: 60, // Revalida a cada minuto
   };
-}
+};

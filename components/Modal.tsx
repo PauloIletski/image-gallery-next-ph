@@ -1,16 +1,18 @@
 import { Dialog } from "@headlessui/react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useKeypress from "react-use-keypress";
 import type { ImageProps } from "../utils/types";
 import SharedModal from "./SharedModal";
 
 export default function Modal({
   images,
+  slug,
   onClose,
 }: {
   images: ImageProps[];
+    slug: string;
   onClose?: () => void;
 }) {
   let overlayRef = useRef();
@@ -22,9 +24,13 @@ export default function Modal({
   const [direction, setDirection] = useState(0);
   const [curIndex, setCurIndex] = useState(index);
 
+  useEffect(() => {
+    console.log("slug", slug)
+  }, [index]);
+
   function handleClose() {
-    router.push("/", undefined, { shallow: true });
-    onClose();
+    router.replace(`/issacar-galeries/${slug}`, undefined, { shallow: true });
+    onClose?.();
   }
 
   function changePhotoId(newVal: number) {
