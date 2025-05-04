@@ -109,13 +109,18 @@ const GalleryPage: NextPage<Props> = ({ images, slug }) => {
 export default GalleryPage;
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const { folders } = await cloudinary.v2.api.sub_folders(process.env.CLOUDINARY_ROOT_FOLDER || '');
+  try {
+    const { folders } = await cloudinary.v2.api.sub_folders(process.env.CLOUDINARY_ROOT_FOLDER || '');
 
-  const paths = folders.map((folder: any) => ({
-    params: { slug: folder.name },
-  }));
+    const paths = folders.map((folder: any) => ({
+      params: { slug: folder.name },
+    }));
 
-  return { paths, fallback: 'blocking' };
+    return { paths, fallback: 'blocking' };
+  } catch (error) {
+    console.error('Erro ao buscar subpastas da Cloudinary:', error);
+    return { paths: [], fallback: 'blocking' }; // ou 'false' se quiser 404
+  }
 };
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
