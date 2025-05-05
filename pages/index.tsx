@@ -4,6 +4,7 @@ import Image from 'next/image';
 import cloudinary from '../utils/cloudinary';
 import getBase64ImageUrl from '../utils/generateBlurPlaceholder';
 import type { ImageProps } from '../utils/types';
+import Head from 'next/head';
 
 type FolderGallery = {
   slug: string;
@@ -17,7 +18,11 @@ interface Props {
 
 const HomePage: NextPage<Props> = ({ galleries }) => {
   return (
-    <main className="p-4 max-w-6xl mx-auto">
+    <>
+      <Head>
+        <title>Issacar Pictures BETA¹</title>
+      </Head>
+      <main className="p-4 max-w-6xl mx-auto">
       <h1 className="text-white text-3xl font-bold mb-8">Galerias da Issacar 📸</h1>
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {galleries.map(({ slug, displayName, thumbnail }) => (
@@ -45,6 +50,11 @@ const HomePage: NextPage<Props> = ({ galleries }) => {
         ))}
       </div>
     </main>
+      <footer className="p-6 text-center text-white/80 sm:p-12">
+        <a href="https://issacar.deco.site">Issacar Church</a> &copy; {new Date().getFullYear()}{" "}
+      </footer>
+    </>
+
   );
 };
 
