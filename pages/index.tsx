@@ -18,43 +18,44 @@ interface Props {
 
 const HomePage: NextPage<Props> = ({ galleries }) => {
   return (
-    <>
+    <div className="flex flex-col min-h-screen bg-black">
       <Head>
         <title>Issacar Pictures BETA¹</title>
       </Head>
-      <main className="p-4 max-w-6xl mx-auto">
-      <h1 className="text-white text-3xl font-bold mb-8">Galerias da Issacar 📸</h1>
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {galleries.map(({ slug, displayName, thumbnail }) => (
-          <Link
-            href={`/issacar-galeries/${slug}`}
-            key={slug}
-            className="block rounded-lg overflow-hidden shadow-lg bg-white hover:shadow-xl transition"
-          >
-            <div className="relative w-full aspect-[3/2]">
-              <Image
-                src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/c_scale,w_800/${thumbnail.public_id}.${thumbnail.format}`}
-                alt={`Thumbnail de ${displayName}`}
-                fill
-                placeholder="blur"
-                blurDataURL={thumbnail.blurDataUrl}
-                className="object-cover"
-              />
-            </div>
-            <div className="p-4 text-center">
-              <h2 className="text-lg font-semibold capitalize">
-                {displayName}
-              </h2>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </main>
-      <footer className="p-6 text-center text-white/80 sm:p-12">
-        <a href="https://issacar.deco.site">Issacar Church</a> &copy; {new Date().getFullYear()}{" "}
-      </footer>
-    </>
 
+      <main className="flex-grow w-full max-w-6xl mx-auto p-4">
+        <h1 className="text-white text-3xl font-bold mb-8">Galerias da Issacar 📸</h1>
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {galleries.map(({ slug, displayName, thumbnail }) => (
+            <Link
+              href={`/issacar-galeries/${slug}`}
+              key={slug}
+              className="block rounded-lg overflow-hidden shadow-lg bg-white hover:shadow-xl transition"
+            >
+              <div className="relative w-full aspect-[3/2]">
+                <Image
+                  src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/c_scale,w_800/${thumbnail.public_id}.${thumbnail.format}`}
+                  alt={`Thumbnail de ${displayName}`}
+                  fill
+                  placeholder="blur"
+                  blurDataURL={thumbnail.blurDataUrl}
+                  className="object-cover"
+                />
+              </div>
+              <div className="p-4 text-center">
+                <h2 className="text-lg font-semibold capitalize">
+                  {displayName}
+                </h2>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </main>
+
+      <footer className="p-6 text-center text-white/80 sm:p-12">
+        <a href="https://issacar.deco.site">Issacar Church</a> &copy; {new Date().getFullYear()}
+      </footer>
+    </div>
   );
 };
 
