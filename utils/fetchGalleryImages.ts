@@ -13,12 +13,14 @@ export async function fetchGalleryImages(slug: string): Promise<ImageProps[]> {
   let i = 0;
 
   for (let result of results.resources) {
+    const isPortrait = result.width < result.height;
     images.push({
       id: i++,
       height: result.height,
       width: result.width,
       public_id: result.public_id,
       format: result.format,
+      isPortrait
     });
   }
 

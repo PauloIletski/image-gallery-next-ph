@@ -36,7 +36,7 @@ export default function Carousel({
       >
         <Image
           src={currentPhoto.blurDataUrl}
-          className="pointer-events-none h-full w-full"
+          className={`pointer-events-none h-full w-full ${currentPhoto.isPortrait ? "object-contain bg-black" : "object-cover"}`}
           alt="blurred background"
           fill
           priority={true}

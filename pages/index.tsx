@@ -39,7 +39,7 @@ const HomePage: NextPage<Props> = ({ galleries }) => {
                   fill
                   placeholder="blur"
                   blurDataURL={thumbnail.blurDataUrl}
-                  className="object-cover"
+                  className={thumbnail.isPortrait ? 'object-contain bg-black' : 'object-cover'}
                 />
               </div>
               <div className="p-4 text-center">

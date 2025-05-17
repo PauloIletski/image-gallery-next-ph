@@ -10,6 +10,8 @@ import { useLastViewedPhoto } from '../../../utils/useLastViewedPhoto';
 import { useEffect, useRef } from 'react';
 import Modal from '../../../components/Modal';
 import Logo from '../../../components/Icons/Logo';
+import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import downloadPhoto from '../../../utils/downloadPhoto';
 
 interface Props {
   images: ImageProps[];
@@ -19,10 +21,10 @@ interface Props {
 const GalleryPage: NextPage<Props> = ({ images, slug }) => {
 
   const router = useRouter();
-    const { photoId } = router.query;
-    const [lastViewedPhoto, setLastViewedPhoto] = useLastViewedPhoto();
+  const { photoId } = router.query;
+  const [lastViewedPhoto, setLastViewedPhoto] = useLastViewedPhoto();
 
-    const lastViewedPhotoRef = useRef<HTMLAnchorElement>(null);
+  const lastViewedPhotoRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     // This effect keeps track of the last viewed photo in the modal to keep the index page in sync when the user navigates back
@@ -74,7 +76,7 @@ const GalleryPage: NextPage<Props> = ({ images, slug }) => {
               Sugerir uma melhoria.
             </a>
           </div>
-          {images.map(({ id, public_id, format, blurDataUrl }) => (
+          {images.map(({ id, public_id, format, blurDataUrl, height, width }) => (
             <Link
               key={id}
               href={`/issacar-galeries/${slug}/?photoId=${id}`}
@@ -82,20 +84,36 @@ const GalleryPage: NextPage<Props> = ({ images, slug }) => {
               shallow
               className="after:content group relative mb-5 block w-full cursor-zoom-in after:pointer-events-none after:absolute after:inset-0 after:rounded-lg after:shadow-highlight"
             >
-              <Image
-                alt="Next.js Conf photo"
-                className="transform rounded-lg brightness-90 transition will-change-auto group-hover:brightness-110"
-                style={{ transform: "translate3d(0, 0, 0)" }}
-                placeholder="blur"
-                blurDataURL={blurDataUrl}
-                src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/c_scale,w_720/${public_id}.${format}`}
-                width={720}
-                height={480}
-                sizes="(max-width: 640px) 100vw,
-                  (max-width: 1280px) 50vw,
-                  (max-width: 1536px) 33vw,
-                  25vw"
-              />
+              <div className="relative w-full">
+                <Image
+                  alt="Issacar Image"
+                  className={`rounded-lg brightness-90 transition will-change-auto group-hover:brightness-110 ${height > width ? "object-contain bg-black" : "object-cover"
+                    }`}
+                  style={{ transform: "translate3d(0, 0, 0)" }}
+                  placeholder="blur"
+                  blurDataURL={blurDataUrl}
+                  src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/c_scale,w_720/${public_id}.${format}`}
+                  width={parseInt(width)}
+                  height={parseInt(height)}
+                  sizes="(max-width: 640px) 100vw,
+          (max-width: 1280px) 50vw,
+          (max-width: 1536px) 33vw,
+          25vw"
+                />
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    downloadPhoto(
+                      `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${public_id}.${format}`,
+                      `${id}.jpg`
+                    );
+                  }}
+                  className="absolute bottom-2 right-2 z-10 rounded-full bg-white p-2 text-black backdrop-blur-lg transition hover:bg-black/75 hover:text-white"
+                  title="Download"
+                >
+                  <ArrowDownTrayIcon className="h-5 w-5" />
+                </button>
+              </div>
             </Link>
           ))}
         </div>
