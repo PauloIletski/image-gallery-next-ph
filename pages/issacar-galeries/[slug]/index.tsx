@@ -64,8 +64,7 @@ const GalleryPage: NextPage<Props> = ({ images, slug }) => {
             <h3 className="mt-2 text-base font-bold uppercase tracking-widest">
               Album: {slug.replace(/_/g, ' ')}</h3>
             <p className="max-w-[40ch] text-white/75 sm:max-w-[32ch]">
-              Esse aplicativo é um piloto para o nosso site, onde você poderá visualizar as fotos dos cultos da Igreja. você pode sugerir melhorias que serão consideradas
-              no lançamento oficial no site.
+              <strong>Atenção:</strong> Para conseguir baixar as fotos do culto, <strong>utilize o navegador de seu celular</strong>
             </p>
             <a
               className="pointer z-10 mt-6 rounded-lg border border-white bg-white px-3 py-2 text-sm font-semibold text-black transition hover:bg-white/10 hover:text-white md:mt-4"
