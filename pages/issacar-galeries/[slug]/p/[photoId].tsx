@@ -5,7 +5,6 @@ import Carousel from "../../../../components/Carousel";
 import type { ImageProps } from "../../../../utils/types";
 import { loadGallerySlugs } from "../../../../lib/galleryCache";
 import { fetchGalleryImages } from "../../../../utils/fetchGalleryImages";
-import { Analytics } from "@vercel/analytics/next";
 
 const Home: NextPage = ({ currentPhoto }: { currentPhoto: ImageProps }) => {
   const router = useRouter();
@@ -21,7 +20,6 @@ const Home: NextPage = ({ currentPhoto }: { currentPhoto: ImageProps }) => {
         <meta property="og:image" content={currentPhotoUrl} />
         <meta name="twitter:image" content={currentPhotoUrl} />
       </Head>
-      <Analytics />
       <main className="mx-auto max-w-[1960px] p-4">
         <Carousel currentPhoto={currentPhoto} index={index} />
       </main>
