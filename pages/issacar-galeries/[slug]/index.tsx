@@ -12,7 +12,6 @@ import Modal from '../../../components/Modal';
 import Logo from '../../../components/Icons/Logo';
 import { ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import downloadPhoto from '../../../utils/downloadPhoto';
-import { Analytics } from '@vercel/analytics/next';
 
 interface Props {
   images: ImageProps[];
@@ -41,7 +40,6 @@ const GalleryPage: NextPage<Props> = ({ images, slug }) => {
       <Head>
         <title>Issacar Pictures BETA¹</title>
       </Head>
-      <Analytics />
       <main className="mx-auto max-w-[1960px] p-4">
         {photoId && (
           <Modal

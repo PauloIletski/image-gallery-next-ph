@@ -5,7 +5,6 @@ import cloudinary from '../utils/cloudinary';
 import getBase64ImageUrl from '../utils/generateBlurPlaceholder';
 import type { ImageProps } from '../utils/types';
 import Head from 'next/head';
-import { Analytics } from '@vercel/analytics/next';
 
 type FolderGallery = {
   slug: string;
@@ -23,7 +22,6 @@ const HomePage: NextPage<Props> = ({ galleries }) => {
       <Head>
         <title>Issacar Pictures BETA¹</title>
       </Head>
-      <Analytics />
       <main className="flex-grow w-full max-w-6xl mx-auto p-4">
         <h1 className="text-white text-3xl font-bold mb-8">Galerias da Issacar 📸</h1>
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
