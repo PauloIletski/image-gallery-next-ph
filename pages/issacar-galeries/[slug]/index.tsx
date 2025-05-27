@@ -146,7 +146,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   const slug = params?.slug as string;
 
   const results = await cloudinary.v2.search
-    .expression(`folder:galeries/${slug}/*`)
+    .expression(`folder:${process.env.CLOUDINARY_ROOT_FOLDER}/${slug}/*`)
     .sort_by('public_id', 'desc')
     .max_results(400)
     .execute();
