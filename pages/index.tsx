@@ -43,7 +43,7 @@ const HomePage: NextPage<Props> = ({ galleries }) => {
             >
               <div className="relative w-full aspect-[3/2]">
                 <Image
-                  src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/c_scale,w_800/${thumbnail.public_id}.${thumbnail.format}`}
+                  src={`https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/c_scale,w_800/${thumbnail.public_id}.${thumbnail.format}`}
                   alt={`Thumbnail de ${displayName}`}
                   fill
                   placeholder="blur"

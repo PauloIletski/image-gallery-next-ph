@@ -71,7 +71,7 @@ const GalleryPage: NextPage<Props> = ({ images, slug }) => {
               href="/"
               rel="noreferrer"
             >
-              Voltar aos albuns
+              Voltar aos albuns.
             </a>
           </div>
           {images.map(({ id, public_id, format, blurDataUrl, height, width }) => (
@@ -90,7 +90,7 @@ const GalleryPage: NextPage<Props> = ({ images, slug }) => {
                   style={{ transform: "translate3d(0, 0, 0)" }}
                   placeholder="blur"
                   blurDataURL={blurDataUrl}
-                  src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/c_scale,w_720/${public_id}.${format}`}
+                  src={`https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/c_scale,w_720/${public_id}.${format}`}
                   width={parseInt(width)}
                   height={parseInt(height)}
                   sizes="(max-width: 640px) 100vw,
@@ -102,7 +102,7 @@ const GalleryPage: NextPage<Props> = ({ images, slug }) => {
                   onClick={(e) => {
                     e.preventDefault();
                     downloadPhoto(
-                      `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${public_id}.${format}`,
+                      `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/${public_id}.${format}`,
                       `${id}.jpg`
                     );
                   }}
