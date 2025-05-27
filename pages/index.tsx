@@ -23,14 +23,17 @@ const HomePage: NextPage<Props> = ({ galleries }) => {
         <title>Issacar Pictures BETA¹</title>
       </Head>
       <main className="flex-grow w-full max-w-6xl mx-auto p-4">
-        <h1 className="text-white text-3xl font-bold mb-8">Galerias da Issacar 📸</h1>
-        <a
-          className="pointer z-10 mt-6 rounded-lg border border-white bg-white px-3 py-2 text-sm font-semibold text-black transition hover:bg-white/10 hover:text-white md:mt-4"
-          href="https://issacar.deco.site/"
-          rel="noreferrer"
-        >
-          Voltar ao Site
-        </a>
+        <div className="flex flex-col items-center justify-between mb-8">
+          <h1 className="text-white text-3xl font-bold mb-8">Galerias da Issacar 📸</h1>
+          <a
+            className="pointer z-10 mt-6 rounded-lg border border-white bg-white px-3 py-2 text-sm font-semibold text-black transition hover:bg-white/10 hover:text-white md:mt-4"
+            href="https://issacar.deco.site/"
+            rel="noreferrer"
+          >
+            Voltar ao Site
+          </a>
+        </div>
+
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {galleries.map(({ slug, displayName, thumbnail }) => (
             <Link
