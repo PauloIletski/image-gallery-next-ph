@@ -29,7 +29,7 @@ const HomePage: NextPage<Props> = ({ galleries }) => {
           href="https://issacar.deco.site/"
           rel="noreferrer"
         >
-          Voltar ao site
+          Voltar ao Site
         </a>
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {galleries.map(({ slug, displayName, thumbnail }) => (
