@@ -5,6 +5,7 @@ import Carousel from "../../../../components/Carousel";
 import type { ImageProps } from "../../../../utils/types";
 import { loadGallerySlugs } from "../../../../lib/galleryCache";
 import { fetchGalleryImages } from "../../../../utils/fetchGalleryImages";
+import { Analytics } from "@vercel/analytics/next";
 
 const Home: NextPage = ({ currentPhoto }: { currentPhoto: ImageProps }) => {
   const router = useRouter();
