@@ -1,90 +1,83 @@
-import { Dialog } from "@headlessui/react";
-import { motion } from "framer-motion";
-import { useRouter } from "next/router";
-import { useEffect, useRef, useState } from "react";
-import useKeypress from "react-use-keypress";
-import type { ImageProps } from "../utils/types";
-import SharedModal from "./SharedModal";
+'use client'
+
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
+import useKeypress from 'react-use-keypress'
+import type { ImageProps } from '../utils/types'
+import SharedModal from './SharedModal'
 
 export default function Modal({
   images,
   slug,
-  onClose,
+  onClose
 }: {
-  images: ImageProps[];
-    slug: string;
-  onClose?: () => void;
+    images: ImageProps[]
+    slug: string
+    onClose?: () => void
 }) {
-  let overlayRef = useRef();
-  const router = useRouter();
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const photoId = searchParams.get('photoId')
+  const index = Number(photoId)
 
-  const { photoId } = router.query;
-  let index = Number(photoId);
-
-  const [direction, setDirection] = useState(0);
-  const [curIndex, setCurIndex] = useState(index);
+  const [direction, setDirection] = useState(0)
+  const [curIndex, setCurIndex] = useState(index)
+  const overlayRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    console.log("slug", slug)
-  }, [index]);
+    overlayRef.current?.focus()
+  }, [])
 
-  function handleClose() {
-    router.replace(`/issacar-galeries/${slug}`, undefined, { shallow: true });
-    onClose?.();
+  const handleClose = () => {
+    router.push(`/issacar-galeries/${slug}`)
+    onClose?.()
   }
 
-  function changePhotoId(newVal: number) {
-    if (newVal > index) {
-      setDirection(1);
-    } else {
-      setDirection(-1);
-    }
-    setCurIndex(newVal);
-    router.push(
-      {
-        query: { photoId: newVal },
-      },
-      `/p/${newVal}`,
-      { shallow: true },
-    );
+  const changePhotoId = (newVal: number) => {
+    setDirection(newVal > curIndex ? 1 : -1)
+    setCurIndex(newVal)
+    router.push(`/issacar-galeries/${slug}?photoId=${newVal}`)
   }
 
-  useKeypress("ArrowRight", () => {
-    if (index + 1 < images.length) {
-      changePhotoId(index + 1);
+  useKeypress('ArrowRight', () => {
+    if (curIndex + 1 < images.length) {
+      changePhotoId(curIndex + 1)
     }
-  });
+  })
 
-  useKeypress("ArrowLeft", () => {
-    if (index > 0) {
-      changePhotoId(index - 1);
+  useKeypress('ArrowLeft', () => {
+    if (curIndex > 0) {
+      changePhotoId(curIndex - 1)
     }
-  });
+  })
 
   return (
-    <Dialog
-      static
-      open={true}
-      onClose={handleClose}
-      initialFocus={overlayRef}
-      className="fixed inset-0 z-10 flex items-center justify-center"
+    <div
+      tabIndex={-1}
+      ref={overlayRef}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xl animate-in fade-in"
+      onClick={handleClose}
+      role="dialog"
+      aria-modal="true"
     >
-      <Dialog.Overlay
-        ref={overlayRef}
-        as={motion.div}
-        key="backdrop"
-        className="fixed inset-0 z-30 bg-black/70 backdrop-blur-2xl"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      />
-      <SharedModal
-        index={curIndex}
-        direction={direction}
-        images={images}
-        changePhotoId={changePhotoId}
-        closeModal={handleClose}
-        navigation={true}
-      />
-    </Dialog>
-  );
+      <div
+        className="relative z-50 max-w-full max-h-full"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          // Prevent propagation for keyboard events as well
+          e.stopPropagation();
+        }}
+        tabIndex={0}
+      >
+        <SharedModal
+          index={curIndex}
+          direction={direction}
+          images={images}
+          changePhotoId={changePhotoId}
+          closeModal={handleClose}
+          navigation={true}
+        />
+      </div>
+    </div>
+  )
 }

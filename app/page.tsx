@@ -1,27 +1,16 @@
-import { GetStaticProps, NextPage } from 'next';
-import Link from 'next/link';
-import Image from 'next/image';
-import cloudinary from '../utils/cloudinary';
-import getBase64ImageUrl from '../utils/generateBlurPlaceholder';
-import type { ImageProps } from '../utils/types';
-import Head from 'next/head';
+import Link from 'next/link'
+import Image from 'next/image'
+import { getGalleries } from '../lib/getGalleries'
 
-type FolderGallery = {
-  slug: string;
-  displayName: string;
-  thumbnail: ImageProps;
-};
+export const dynamic = 'force-static' // Comportamento similar ao getStaticProps
+export const revalidate = 300 // ISR
 
-interface Props {
-  galleries: FolderGallery[];
-}
+export default async function HomePage() {
+  const galleries = await getGalleries()
+  const date= new Date().getFullYear()
 
-const HomePage: NextPage<Props> = ({ galleries }) => {
   return (
     <div className="flex flex-col min-h-screen bg-black">
-      <Head>
-        <title>Issacar Pictures BETA¹</title>
-      </Head>
       <main className="flex-grow w-full max-w-6xl mx-auto p-4">
         <div className="flex flex-col sm:flex-row items-center justify-between mb-8 p-2">
           <h1 className="text-white text-3xl font-bold mb-8">Galerias da Issacar 📸</h1>
@@ -52,9 +41,7 @@ const HomePage: NextPage<Props> = ({ galleries }) => {
                 />
               </div>
               <div className="p-4 text-center">
-                <h2 className="text-lg font-semibold capitalize">
-                  {displayName}
-                </h2>
+                <h2 className="text-lg font-semibold capitalize">{displayName}</h2>
               </div>
             </Link>
           ))}
@@ -62,51 +49,8 @@ const HomePage: NextPage<Props> = ({ galleries }) => {
       </main>
 
       <footer className="p-6 text-center text-white/80 sm:p-12">
-        <a href="https://issacar.deco.site">Issacar Church</a> &copy; {new Date().getFullYear()}
+        <a href="https://issacar.deco.site">Issacar Church</a> &copy; {date}
       </footer>
     </div>
-  );
-};
-
-export default HomePage;
-
-export const getStaticProps: GetStaticProps = async () => {
-  const { folders } = await cloudinary.v2.api.sub_folders(process.env.CLOUDINARY_ROOT_FOLDER || '');
-
-  const galleries: FolderGallery[] = [];
-
-  for (const folder of folders) {
-    const slug = folder.name;
-
-    const result = await cloudinary.v2.search
-      .expression(`folder:galeries/${slug}/*`)
-      .sort_by('public_id', 'desc')
-      .max_results(1)
-      .execute();
-
-    const image = result.resources[0];
-    if (!image) continue;
-
-    const thumbnail: ImageProps = {
-      id: 0,
-      height: image.height,
-      width: image.width,
-      public_id: image.public_id,
-      format: image.format,
-      blurDataUrl: await getBase64ImageUrl(image),
-    };
-
-    galleries.push({
-      slug,
-      displayName: slug.replace(/_/g, ' '),
-      thumbnail,
-    });
-  }
-
-  return {
-    props: {
-      galleries,
-    },
-    revalidate: 300,
-  };
-};
+  )
+}
