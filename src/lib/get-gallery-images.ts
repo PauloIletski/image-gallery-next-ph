@@ -25,27 +25,55 @@ export interface GalleryFolder {
   }
 }
 
+interface CloudinaryResource {
+  public_id: string
+  format: string
+  height: number
+  width: number
+}
+
+const generateBlurPlaceholder = async (resource: any) => {
+  try {
+    return await getBase64ImageUrl(resource)
+  } catch (error) {
+    console.error('Erro ao gerar blur placeholder:', error)
+    return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+  }
+}
+
 export async function getGalleryPaths(): Promise<GalleryFolder[]> {
   try {
+    if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
+      throw new Error('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME não configurado')
+    }
+
     const { folders } = await cloudinary.api.sub_folders('galeries')
+
+    if (!folders || !Array.isArray(folders)) {
+      console.error('Nenhuma pasta encontrada ou resposta inválida do Cloudinary')
+      return []
+    }
 
     const foldersWithThumbnails = await Promise.all(
       folders.map(async (folder: any) => {
         try {
-          // Busca a primeira imagem da pasta
           const { resources } = await cloudinary.search
             .expression(`folder:galeries/${folder.name}/*`)
             .sort_by('public_id', 'desc')
+            .with_field('context')
             .max_results(1)
             .execute()
 
           if (resources && resources.length > 0) {
-            const thumbnail = {
-              public_id: resources[0].public_id,
-              format: resources[0].format,
-              blurDataUrl: await getBase64ImageUrl(resources[0])
+            const blurDataUrl = await generateBlurPlaceholder(resources[0])
+            return {
+              slug: folder.name,
+              thumbnail: {
+                public_id: resources[0].public_id,
+                format: resources[0].format,
+                blurDataUrl
+              }
             }
-            return { slug: folder.name, thumbnail }
           }
 
           return { slug: folder.name }
@@ -65,26 +93,67 @@ export async function getGalleryPaths(): Promise<GalleryFolder[]> {
 
 export async function getGalleryImages(slug: string): Promise<{ images: ImageProps[] }> {
   try {
+    if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
+      throw new Error('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME não configurado')
+    }
+
+    if (!slug) {
+      throw new Error('Slug não fornecido')
+    }
+
     const { resources } = await cloudinary.search
       .expression(`folder:galeries/${slug}/*`)
       .sort_by('public_id', 'desc')
+      .with_field('context')
       .max_results(400)
       .execute()
 
-    const images: ImageProps[] = await Promise.all(
-      resources.map(async (resource: any, index: number) => ({
-        id: index,
-        height: resource.height,
-        width: resource.width,
-        public_id: resource.public_id,
-        format: resource.format,
-        blurDataUrl: await getBase64ImageUrl(resource)
-      }))
-    )
+    if (!resources || !Array.isArray(resources)) {
+      console.error(`Nenhuma imagem encontrada para o álbum: ${slug}`)
+      return { images: [] }
+    }
+
+    // Processa as imagens em lotes para evitar sobrecarga
+    const batchSize = 5
+    const images: ImageProps[] = []
+
+    for (let i = 0; i < resources.length; i += batchSize) {
+      const batch = resources.slice(i, i + batchSize)
+      const batchResults = await Promise.all(
+        batch.map(async (resource: CloudinaryResource, batchIndex: number) => {
+          try {
+            const index = i + batchIndex
+            const blurDataUrl = await generateBlurPlaceholder(resource)
+
+            return {
+              id: index,
+              height: resource.height,
+              width: resource.width,
+              public_id: resource.public_id,
+              format: resource.format,
+              blurDataUrl,
+              isPortrait: resource.height > resource.width,
+              tags: []
+            } as ImageProps
+          } catch (error) {
+            console.error(`Erro ao processar imagem ${resource.public_id}:`, error)
+            return null
+          }
+        })
+      )
+
+      // Filtra resultados nulos (imagens que falharam)
+      const validResults = batchResults.filter((result): result is ImageProps => result !== null)
+      images.push(...validResults)
+    }
+
+    if (images.length === 0) {
+      console.error(`Nenhuma imagem válida processada para o álbum: ${slug}`)
+    }
 
     return { images }
   } catch (error) {
     console.error('Erro ao buscar imagens:', error)
-    return { images: [] }
+    throw error // Propaga o erro para ser tratado na página
   }
 }

@@ -10,10 +10,6 @@ import 'yet-another-react-lightbox/plugins/thumbnails.css'
 import type { ImageProps } from '@/utils/types'
 import { Cloudinary } from '@cloudinary/url-gen'
 import { scale } from '@cloudinary/url-gen/actions/resize'
-import { format, quality } from '@cloudinary/url-gen/actions/delivery'
-import { auto } from '@cloudinary/url-gen/qualifiers/format'
-import { auto as autoQuality } from '@cloudinary/url-gen/qualifiers/quality'
-import type { ReactNode } from 'react'
 import { checkRateLimit } from '@/utils/cloudinaryRateLimit'
 
 const cld = new Cloudinary({

@@ -3,7 +3,7 @@ import { getGalleryImages, getGalleryPaths, type GalleryFolder } from '@/lib/get
 import Logo from '@/components/Icons/Logo'
 import { notFound } from 'next/navigation'
 import GalleryImage from '@/components/GalleryImage'
-import GalleryModalWrapper from '@/components/GalleryModalWrapper'
+import ImageGalleryInline from '@/components/ImageGalleryInline'
 
 type PageProps = {
     params: { slug: string }
@@ -26,16 +26,24 @@ export async function generateStaticParams() {
 export const revalidate = 60
 
 export default async function GalleryPage({ params }: PageProps) {
+    if (!params?.slug) {
+        console.error('Slug não fornecido')
+        return notFound()
+    }
+
     try {
         const slug = params.slug
 
+        // Primeiro, verifica se a pasta existe
         const folders = await getGalleryPaths()
         const isValidSlug = folders.some(folder => folder.slug === slug)
 
         if (!isValidSlug) {
+            console.error(`Pasta não encontrada: ${slug}`)
             return notFound()
         }
 
+        // Depois, busca as imagens
         const { images } = await getGalleryImages(slug)
 
         if (!images || images.length === 0) {
@@ -45,8 +53,6 @@ export default async function GalleryPage({ params }: PageProps) {
 
         return (
             <>
-                <GalleryModalWrapper images={images} slug={slug} />
-
                 <div className="columns-1 gap-4 sm:columns-2 xl:columns-3 2xl:columns-4">
                     <div className="after:content relative mb-5 flex h-[629px] flex-col items-center justify-end gap-4 overflow-hidden rounded-lg bg-white/10 px-6 pb-16 pt-64 text-center text-white shadow-highlight after:pointer-events-none after:absolute after:inset-0 after:rounded-lg after:shadow-highlight lg:pt-0">
                         <div className="absolute inset-0 flex items-center justify-center opacity-20">
@@ -68,6 +74,10 @@ export default async function GalleryPage({ params }: PageProps) {
                         >
                             Voltar aos álbuns
                         </Link>
+                    </div>
+
+                    <div className="mb-8">
+                        <ImageGalleryInline images={images} slug={slug} />
                     </div>
 
                     {images.map((img) => {

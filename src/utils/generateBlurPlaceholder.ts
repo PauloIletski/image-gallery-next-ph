@@ -5,17 +5,26 @@ export default async function getBase64ImageUrl(image: { public_id: string; form
   try {
     const result = await cloudinary.v2.api.resource(image.public_id, {
       transformation: [
-        { width: 10, crop: 'scale' },
+        { width: 10, height: 10, crop: 'fill' },
         { fetch_format: 'auto' },
+        { quality: 'auto:low' },
       ],
     })
 
     const response = await fetch(result.secure_url)
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.statusText}`)
+    }
+
     const buffer = await response.arrayBuffer()
 
     const base64 = await sharp(Buffer.from(buffer))
-      .resize(10)
-      .blur()
+      .resize(10, 10, {
+        fit: 'cover',
+        position: 'center'
+      })
+      .blur(3)
       .toBuffer()
 
     return `data:image/${image.format};base64,${base64.toString('base64')}`
