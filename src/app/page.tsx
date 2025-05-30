@@ -25,7 +25,7 @@ export default async function HomePage() {
                     </div>
                     <Logo className="relative w-28 drop-shadow-xl" />
                     <h1 className="relative mt-4 text-2xl font-bold uppercase tracking-widest drop-shadow-lg">
-                        Issacar Pictures Beta¹
+                        Issacar Pictures Beta²
                     </h1>
                     <p className="relative mt-2 max-w-[40ch] text-white/75 drop-shadow-lg sm:max-w-[32ch]">
                         Bem-vindo à galeria de fotos da Issacar Church. Selecione um álbum abaixo para ver as fotos.
