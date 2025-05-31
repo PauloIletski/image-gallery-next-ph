@@ -1,107 +1,85 @@
 'use client';
 
-import Lightbox from "yet-another-react-lightbox";
-import Inline from "yet-another-react-lightbox/plugins/inline";
-import Download from "yet-another-react-lightbox/plugins/download";
-import Share from "yet-another-react-lightbox/plugins/share";
-import "yet-another-react-lightbox/styles.css";
-import { ImageProps } from "@/types/image";
-import { useState, useMemo, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from 'react';
+import Lightbox from 'yet-another-react-lightbox';
+import Captions from 'yet-another-react-lightbox/plugins/captions';
+import Download from 'yet-another-react-lightbox/plugins/download';
+import Share from 'yet-another-react-lightbox/plugins/share';
+import Zoom from 'yet-another-react-lightbox/plugins/zoom';
+import 'yet-another-react-lightbox/styles.css';
+import 'yet-another-react-lightbox/plugins/captions.css';
+import type { ImageProps } from '@/types/image';
 
 interface ImageGalleryInlineProps {
     images: ImageProps[];
     slug: string;
 }
 
+function getThumbnailUrl(fileId: string): string {
+    return `https://lh3.googleusercontent.com/d/${fileId}=w800`;
+}
+
+function getFullUrl(fileId: string): string {
+    return `https://lh3.googleusercontent.com/d/${fileId}`;
+}
+
+function getDownloadUrl(fileId: string): string {
+    return `https://drive.google.com/uc?export=download&id=${fileId}`;
+}
+
 export default function ImageGalleryInline({ images, slug }: ImageGalleryInlineProps) {
     const [index, setIndex] = useState(-1);
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const photoId = searchParams?.get("photoId");
 
-    useEffect(() => {
-        if (photoId) {
-            const newIndex = parseInt(photoId, 10);
-            if (!isNaN(newIndex) && newIndex >= 0 && newIndex < images.length) {
-                setIndex(newIndex);
-            }
+    const slides = images.map((image) => ({
+        src: getFullUrl(image.public_id),
+        alt: `Foto ${image.id + 1} do álbum ${slug}`,
+        width: image.width,
+        height: image.height,
+        description: `Foto ${image.id + 1} do álbum ${slug}`,
+        download: getDownloadUrl(image.public_id),
+        share: {
+            url: getFullUrl(image.public_id),
+            title: 'Issacar Pictures',
+            text: `Foto ${image.id + 1} do álbum ${slug}`
         }
-    }, [photoId, images.length]);
-
-    const slides = useMemo(() => images.map((image) => {
-        // URL para o carrossel inline (menor e otimizada)
-        const inlineUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/c_scale,w_800,q_auto:good/${image.public_id}.${image.format}`;
-
-        // URL para o modal (alta qualidade)
-        const modalUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/q_auto:best/${image.public_id}.${image.format}`;
-
-        // URL para download (qualidade original)
-        const downloadUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/fl_attachment/${image.public_id}.${image.format}`;
-
-        return {
-            src: index >= 0 ? modalUrl : inlineUrl,
-            width: image.width,
-            height: image.height,
-            download: downloadUrl,
-            share: {
-                url: modalUrl,
-                title: 'Issacar Pictures',
-                text: 'Confira esta foto da Issacar Church!'
-            }
-        };
-    }), [images, index]);
-
-    const handleClose = () => {
-        setIndex(-1);
-        // Navega para a URL base da galeria
-        router.push(`/issacar-galeries/${slug}/`);
-    };
-
-    const handleClick = (idx: number) => {
-        setIndex(idx);
-        // Atualiza a URL com o novo photoId
-        router.push(`/issacar-galeries/${slug}/?photoId=${idx}`);
-    };
+    }));
 
     return (
         <>
-            <div className="w-full max-w-[900px] aspect-[3/2] mx-auto">
-                <Lightbox
-                    plugins={[Inline]}
-                    slides={slides}
-                    carousel={{
-                        padding: 0,
-                        spacing: 0,
-                        imageFit: "cover",
-                        preload: 2
-                    }}
-                    on={{
-                        click: ({ index }) => handleClick(index)
-                    }}
-                />
+            <div className="flex flex-wrap gap-4">
+                {slides.map((slide, idx) => (
+                    <button
+                        key={idx}
+                        type="button"
+                        className="relative h-20 flex-[0_0_80px] overflow-hidden rounded-lg"
+                        onClick={() => setIndex(idx)}
+                    >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={getThumbnailUrl(images[idx].public_id)}
+                            alt={slide.alt}
+                            className="absolute inset-0 h-full w-full object-cover"
+                        />
+                    </button>
+                ))}
             </div>
 
             <Lightbox
-                plugins={[Download, Share]}
+                index={index}
                 slides={slides}
                 open={index >= 0}
-                index={index}
-                close={handleClose}
+                close={() => setIndex(-1)}
+                plugins={[Captions, Download, Share, Zoom]}
+                zoom={{
+                    maxZoomPixelRatio: 5,
+                    zoomInMultiplier: 2,
+                }}
                 carousel={{
-                    imageFit: "contain",
-                    preload: 1
+                    finite: true,
                 }}
                 render={{
-                    buttonPrev: index === 0 ? () => null : undefined,
-                    buttonNext: index === slides.length - 1 ? () => null : undefined
-                }}
-                on={{
-                    view: ({ index: newIndex }) => {
-                        if (newIndex !== index) {
-                            handleClick(newIndex);
-                        }
-                    }
+                    buttonPrev: slides.length <= 1 ? () => null : undefined,
+                    buttonNext: slides.length <= 1 ? () => null : undefined,
                 }}
             />
         </>
