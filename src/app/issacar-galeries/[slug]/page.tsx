@@ -74,7 +74,7 @@ export default async function GalleryPage({ params }: PageProps) {
                         </div>
                         <Logo className="relative w-28 drop-shadow-xl" />
                         <h1 className="text-base font-bold uppercase tracking-widest">
-                            Issacar Pictures Beta¹
+                            Issacar Pictures Beta²
                         </h1>
                         <h3 className="mt-2 text-base font-bold uppercase tracking-widest">
                             Album: {slug.replace(/_/g, ' ')}
