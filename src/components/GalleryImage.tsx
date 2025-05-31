@@ -34,8 +34,7 @@ export default function GalleryImage({ id, height, width, public_id, format, slu
             <div className="relative w-full">
                 <Image
                     alt="Issacar Image"
-                    className={`transform rounded-lg brightness-90 transition will-change-auto group-hover:brightness-110 ${isLoading ? 'scale-110 blur-2xl grayscale' : 'scale-100 blur-0 grayscale-0'
-                        }`}
+                    className={`transform rounded-lg brightness-90 transition will-change-auto group-hover:brightness-110 ${isLoading ? 'scale-110 blur-2xl grayscale' : 'scale-100 blur-0 grayscale-0'}`}
                     style={{ transform: 'translate3d(0, 0, 0)' }}
                     placeholder="blur"
                     blurDataURL={blurDataUrl}
@@ -43,7 +42,7 @@ export default function GalleryImage({ id, height, width, public_id, format, slu
                     width={width}
                     height={height}
                     sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, (max-width: 1536px) 33vw, 25vw"
-                    onLoadingComplete={() => setLoading(false)}
+                    onLoad={() => setLoading(false)}
                 />
                 <button
                     onClick={(e) => {

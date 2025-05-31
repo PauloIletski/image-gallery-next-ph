@@ -8,18 +8,6 @@ import Download from 'yet-another-react-lightbox/plugins/download'
 import Thumbnails from 'yet-another-react-lightbox/plugins/thumbnails'
 import 'yet-another-react-lightbox/plugins/thumbnails.css'
 import type { ImageProps } from '@/utils/types'
-import { Cloudinary } from '@cloudinary/url-gen'
-import { scale } from '@cloudinary/url-gen/actions/resize'
-import { checkRateLimit } from '@/utils/cloudinaryRateLimit'
-
-const cld = new Cloudinary({
-    cloud: {
-        cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
-    },
-    url: {
-        secure: true
-    }
-})
 
 type Props = {
     images: ImageProps[]
@@ -32,40 +20,23 @@ export default function GalleryModal({ images, slug, photoId }: Props) {
     const index = Number(photoId)
 
     const slides = images.map((image) => {
-        // Verifica o rate limit antes de cada transformação
-        const canTransform = checkRateLimit()
-        const cldImage = cld.image(image.public_id)
+        // URL para visualização em alta qualidade
+        const viewUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/q_auto:best/${image.public_id}.${image.format}`
 
-        // Se não puder transformar, usa a imagem original
-        if (!canTransform) {
-            return {
-                src: `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${image.public_id}.${image.format}`,
-                alt: 'Issacar Image',
-                width: Number(image.width),
-                height: Number(image.height)
-            }
-        }
+        // URL para download em qualidade original
+        const downloadUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${image.public_id}.${image.format}`
 
-        cldImage.addTransformation('f_auto,q_auto') // Usando string de transformação direta
-
-        // Imagem principal em alta resolução
-        const mainImage = cldImage.resize(scale().width(1920))
-
-        // Thumbnail otimizada
-        const thumbnail = cldImage.resize(scale().width(100))
+        // URL para thumbnail otimizada
+        const thumbnailUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/c_scale,w_100,q_auto/${image.public_id}.${image.format}`
 
         return {
-            src: mainImage.toURL(),
+            src: viewUrl,
             alt: 'Issacar Image',
             width: Number(image.width),
             height: Number(image.height),
-            srcSet: [
-                { src: cldImage.resize(scale().width(640)).toURL(), width: 640, height: Math.round(640 * Number(image.height) / Number(image.width)) },
-                { src: cldImage.resize(scale().width(1024)).toURL(), width: 1024, height: Math.round(1024 * Number(image.height) / Number(image.width)) },
-                { src: cldImage.resize(scale().width(1920)).toURL(), width: 1920, height: Math.round(1920 * Number(image.height) / Number(image.width)) }
-            ],
+            download: downloadUrl,
             thumbnails: {
-                src: thumbnail.toURL(),
+                src: thumbnailUrl,
                 alt: 'Thumbnail'
             }
         }

@@ -4,6 +4,7 @@ import Logo from '@/components/Icons/Logo'
 import { notFound } from 'next/navigation'
 import GalleryImage from '@/components/GalleryImage'
 import ImageGalleryInline from '@/components/ImageGalleryInline'
+import GalleryModalWrapper from '@/components/GalleryModalWrapper'
 
 type PageProps = {
     params: { slug: string }
@@ -47,8 +48,20 @@ export default async function GalleryPage({ params }: PageProps) {
         const { images } = await getGalleryImages(slug)
 
         if (!images || images.length === 0) {
-            console.error(`Nenhuma imagem encontrada para o álbum: ${slug}`)
-            return notFound()
+            return (
+                <div className="flex min-h-screen flex-col items-center justify-center">
+                    <Logo className="relative mb-8 w-28 drop-shadow-xl" />
+                    <p className="text-center text-xl text-white/75">
+                        Ops: não foi possível carregar as imagens no momento, tente novamente mais tarde
+                    </p>
+                    <Link
+                        className="pointer z-10 mt-6 rounded-lg border border-white bg-white px-3 py-2 text-sm font-semibold text-black transition hover:bg-white/10 hover:text-white md:mt-4"
+                        href="/"
+                    >
+                        Voltar aos álbuns
+                    </Link>
+                </div>
+            )
         }
 
         return (
@@ -100,10 +113,25 @@ export default async function GalleryPage({ params }: PageProps) {
                 <footer className="p-6 text-center text-white/80 sm:p-12">
                     <a href="https://issacar.deco.site" className="hover:text-white">Issacar Church</a> &copy; {new Date().getFullYear()}
                 </footer>
+
+                <GalleryModalWrapper images={images} slug={slug} />
             </>
         )
     } catch (error) {
         console.error('Erro ao carregar a galeria:', error)
-        return notFound()
+        return (
+            <div className="flex min-h-screen flex-col items-center justify-center">
+                <Logo className="relative mb-8 w-28 drop-shadow-xl" />
+                <p className="text-center text-xl text-white/75">
+                    Ops: não foi possível carregar as imagens no momento, tente novamente mais tarde
+                </p>
+                <Link
+                    className="pointer z-10 mt-6 rounded-lg border border-white bg-white px-3 py-2 text-sm font-semibold text-black transition hover:bg-white/10 hover:text-white md:mt-4"
+                    href="/"
+                >
+                    Voltar aos álbuns
+                </Link>
+            </div>
+        )
     }
 }

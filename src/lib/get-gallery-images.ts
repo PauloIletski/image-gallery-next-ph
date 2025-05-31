@@ -1,5 +1,4 @@
 import { v2 as cloudinary } from 'cloudinary'
-import getBase64ImageUrl from '../utils/generateBlurPlaceholder'
 import type { ImageProps } from '../utils/types'
 
 cloudinary.config({
@@ -18,6 +17,7 @@ export interface Image {
 
 export interface GalleryFolder {
   slug: string
+  createdAt?: string
   thumbnail?: {
     public_id: string
     format: string
@@ -30,14 +30,23 @@ interface CloudinaryResource {
   format: string
   height: number
   width: number
+  created_at: string
 }
 
-const generateBlurPlaceholder = async (resource: any) => {
+async function retryOperation<T>(
+  operation: () => Promise<T>,
+  retries = 3,
+  delay = 1000
+): Promise<T> {
   try {
-    return await getBase64ImageUrl(resource)
+    return await operation()
   } catch (error) {
-    console.error('Erro ao gerar blur placeholder:', error)
-    return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+    if (retries === 0) {
+      throw error
+    }
+    console.log(`Tentando novamente em ${delay}ms... (${retries} tentativas restantes)`)
+    await new Promise(resolve => setTimeout(resolve, delay))
+    return retryOperation(operation, retries - 1, delay * 2)
   }
 }
 
@@ -47,44 +56,54 @@ export async function getGalleryPaths(): Promise<GalleryFolder[]> {
       throw new Error('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME não configurado')
     }
 
-    const { folders } = await cloudinary.api.sub_folders('galeries')
+    const { folders } = await retryOperation(() => cloudinary.api.sub_folders('galeries'))
 
     if (!folders || !Array.isArray(folders)) {
       console.error('Nenhuma pasta encontrada ou resposta inválida do Cloudinary')
       return []
     }
 
-    const foldersWithThumbnails = await Promise.all(
+    const foldersWithDetails = await Promise.all(
       folders.map(async (folder: any) => {
         try {
-          const { resources } = await cloudinary.search
-            .expression(`folder:galeries/${folder.name}/*`)
-            .sort_by('public_id', 'desc')
-            .with_field('context')
-            .max_results(1)
-            .execute()
+          // Busca a primeira imagem de cada pasta com retry
+          const { resources } = await retryOperation(() =>
+            cloudinary.search
+              .expression(`folder:galeries/${folder.name}/*`)
+              .sort_by('created_at', 'asc')
+              .max_results(1)
+              .execute()
+          )
 
           if (resources && resources.length > 0) {
-            const blurDataUrl = await generateBlurPlaceholder(resources[0])
+            const now = new Date().toISOString()
             return {
               slug: folder.name,
+              createdAt: now,
               thumbnail: {
                 public_id: resources[0].public_id,
                 format: resources[0].format,
-                blurDataUrl
+                blurDataUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
               }
             }
           }
 
-          return { slug: folder.name }
+          return {
+            slug: folder.name,
+            createdAt: new Date().toISOString()
+          }
         } catch (error) {
-          console.error(`Erro ao buscar thumbnail para ${folder.name}:`, error)
-          return { slug: folder.name }
+          console.error(`Erro ao buscar detalhes para ${folder.name}:`, error)
+          return {
+            slug: folder.name,
+            createdAt: new Date().toISOString()
+          }
         }
       })
     )
 
-    return foldersWithThumbnails
+    // Ordena os álbuns pelo nome da pasta (ordem alfabética inversa)
+    return foldersWithDetails.sort((a, b) => b.slug.localeCompare(a.slug))
   } catch (error) {
     console.error('Erro ao buscar pastas:', error)
     return []
@@ -109,51 +128,23 @@ export async function getGalleryImages(slug: string): Promise<{ images: ImagePro
       .execute()
 
     if (!resources || !Array.isArray(resources)) {
-      console.error(`Nenhuma imagem encontrada para o álbum: ${slug}`)
-      return { images: [] }
+      throw new Error('Ops: não foi possível carregar as imagens no momento, tente novamente mais tarde')
     }
 
-    // Processa as imagens em lotes para evitar sobrecarga
-    const batchSize = 5
-    const images: ImageProps[] = []
-
-    for (let i = 0; i < resources.length; i += batchSize) {
-      const batch = resources.slice(i, i + batchSize)
-      const batchResults = await Promise.all(
-        batch.map(async (resource: CloudinaryResource, batchIndex: number) => {
-          try {
-            const index = i + batchIndex
-            const blurDataUrl = await generateBlurPlaceholder(resource)
-
-            return {
-              id: index,
-              height: resource.height,
-              width: resource.width,
-              public_id: resource.public_id,
-              format: resource.format,
-              blurDataUrl,
-              isPortrait: resource.height > resource.width,
-              tags: []
-            } as ImageProps
-          } catch (error) {
-            console.error(`Erro ao processar imagem ${resource.public_id}:`, error)
-            return null
-          }
-        })
-      )
-
-      // Filtra resultados nulos (imagens que falharam)
-      const validResults = batchResults.filter((result): result is ImageProps => result !== null)
-      images.push(...validResults)
-    }
-
-    if (images.length === 0) {
-      console.error(`Nenhuma imagem válida processada para o álbum: ${slug}`)
-    }
+    const images: ImageProps[] = resources.map((resource: CloudinaryResource, index: number) => ({
+      id: index,
+      height: resource.height,
+      width: resource.width,
+      public_id: resource.public_id,
+      format: resource.format,
+      blurDataUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+      isPortrait: resource.height > resource.width,
+      tags: []
+    }))
 
     return { images }
   } catch (error) {
     console.error('Erro ao buscar imagens:', error)
-    throw error // Propaga o erro para ser tratado na página
+    throw new Error('Ops: não foi possível carregar as imagens no momento, tente novamente mais tarde')
   }
 }

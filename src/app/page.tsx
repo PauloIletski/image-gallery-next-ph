@@ -13,6 +13,15 @@ function capitalizeTitle(text: string): string {
         .join(' ')
 }
 
+function formatDate(dateString: string): string {
+    const date = new Date(dateString)
+    return new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    }).format(date)
+}
+
 export default async function HomePage() {
     const folders = await getGalleryPaths()
 
@@ -62,10 +71,15 @@ export default async function HomePage() {
                                 </div>
                             )}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                            <div className="absolute inset-0 flex items-end justify-center p-4">
-                                <h2 className="text-center text-lg font-bold text-white drop-shadow-lg">
+                            <div className="absolute inset-0 flex flex-col items-end justify-end p-4">
+                                <h2 className="w-full text-center text-lg font-bold text-white drop-shadow-lg mb-1">
                                     {capitalizeTitle(folder.slug)}
                                 </h2>
+                                {folder.createdAt && (
+                                    <p className="w-full text-center text-sm text-white/80">
+                                        {formatDate(folder.createdAt)}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </Link>
