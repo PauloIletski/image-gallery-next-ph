@@ -1,6 +1,6 @@
 // pages/api/cron/update-galleries.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import cloudinary from '../../../utils/cloudinary';
+import { cloudinaryService } from '../../../utils/cloudinaryService';
 import { saveGallerySlugs } from '../../../lib/galleryCache';
 
 const DEPLOY_HOOK = process.env.VERCEL_DEPLOY_HOOK_URL;
@@ -9,7 +9,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'GET') return res.status(405).end('Method Not Allowed');
 
   try {
-    const { folders } = await cloudinary.v2.api.sub_folders(process.env.CLOUDINARY_ROOT_FOLDER || '');
+    const { folders } = await cloudinaryService.getGalleryFolders();
     const slugs = folders.map((folder: any) => folder.name);
 
     await saveGallerySlugs(slugs);

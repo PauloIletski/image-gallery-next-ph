@@ -1,12 +1,5 @@
-import { v2 as cloudinary } from 'cloudinary'
+import { cloudinaryService } from '../utils/cloudinaryService'
 import type { ImageProps } from '../utils/types'
-
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true
-})
 
 export interface Image {
   id: number
@@ -33,30 +26,13 @@ interface CloudinaryResource {
   created_at: string
 }
 
-async function retryOperation<T>(
-  operation: () => Promise<T>,
-  retries = 3,
-  delay = 1000
-): Promise<T> {
-  try {
-    return await operation()
-  } catch (error) {
-    if (retries === 0) {
-      throw error
-    }
-    console.log(`Tentando novamente em ${delay}ms... (${retries} tentativas restantes)`)
-    await new Promise(resolve => setTimeout(resolve, delay))
-    return retryOperation(operation, retries - 1, delay * 2)
-  }
-}
-
 export async function getGalleryPaths(): Promise<GalleryFolder[]> {
   try {
     if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
       throw new Error('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME não configurado')
     }
 
-    const { folders } = await retryOperation(() => cloudinary.api.sub_folders('galeries'))
+    const { folders } = await cloudinaryService.getGalleryFolders()
 
     if (!folders || !Array.isArray(folders)) {
       console.error('Nenhuma pasta encontrada ou resposta inválida do Cloudinary')
@@ -66,14 +42,8 @@ export async function getGalleryPaths(): Promise<GalleryFolder[]> {
     const foldersWithDetails = await Promise.all(
       folders.map(async (folder: any) => {
         try {
-          // Busca a primeira imagem de cada pasta com retry
-          const { resources } = await retryOperation(() =>
-            cloudinary.search
-              .expression(`folder:galeries/${folder.name}/*`)
-              .sort_by('created_at', 'asc')
-              .max_results(1)
-              .execute()
-          )
+          // Busca a primeira imagem de cada pasta
+          const { resources } = await cloudinaryService.getGalleryImages(folder.name)
 
           if (resources && resources.length > 0) {
             const now = new Date().toISOString()
@@ -120,12 +90,11 @@ export async function getGalleryImages(slug: string): Promise<{ images: ImagePro
       throw new Error('Slug não fornecido')
     }
 
-    const { resources } = await cloudinary.search
-      .expression(`folder:galeries/${slug}/*`)
-      .sort_by('public_id', 'desc')
-      .with_field('context')
-      .max_results(400)
-      .execute()
+    // Buscar imagens (com cache e retry automático)
+    const { resources } = await cloudinaryService.getGalleryImages(slug)
+
+
+    cloudinaryService.clearCache('gallery_key')
 
     if (!resources || !Array.isArray(resources)) {
       throw new Error('Ops: não foi possível carregar as imagens no momento, tente novamente mais tarde')
