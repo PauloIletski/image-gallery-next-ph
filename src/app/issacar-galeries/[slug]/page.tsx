@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import GalleryImage from '@/components/GalleryImage'
 import ImageGalleryInline from '@/components/ImageGalleryInline'
 import GalleryModalWrapper from '@/components/GalleryModalWrapper'
+import { Suspense } from 'react'
 
 type PageProps = {
     params: { slug: string }
@@ -73,7 +74,7 @@ export default async function GalleryPage({ params }: PageProps) {
                         </div>
                         <Logo className="relative w-28 drop-shadow-xl" />
                         <h1 className="text-base font-bold uppercase tracking-widest">
-                            Issacar Pictures Beta²
+                            Issacar Pictures Beta¹
                         </h1>
                         <h3 className="mt-2 text-base font-bold uppercase tracking-widest">
                             Album: {slug.replace(/_/g, ' ')}
@@ -114,7 +115,9 @@ export default async function GalleryPage({ params }: PageProps) {
                     <a href="https://issacar.deco.site" className="hover:text-white">Issacar Church</a> &copy; {new Date().getFullYear()}
                 </footer>
 
-                <GalleryModalWrapper images={images} slug={slug} />
+                <Suspense fallback={null}>
+                    <GalleryModalWrapper images={images} slug={slug} />
+                </Suspense>
             </>
         )
     } catch (error) {

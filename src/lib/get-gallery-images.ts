@@ -93,7 +93,10 @@ export async function getGalleryImages(slug: string): Promise<{ images: ImagePro
     // Buscar imagens (com cache e retry automático)
     const { resources } = await cloudinaryService.getGalleryImages(slug)
 
+    // Verificar estado atual do rate limit
+    const rateLimitInfo = cloudinaryService.getRateLimitInfo()
 
+    // Limpar cache se necessário
     cloudinaryService.clearCache('gallery_key')
 
     if (!resources || !Array.isArray(resources)) {
