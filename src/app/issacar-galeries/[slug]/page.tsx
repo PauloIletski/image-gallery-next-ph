@@ -90,9 +90,9 @@ export default async function GalleryPage({ params }: PageProps) {
                         </Link>
                     </div>
 
-                    <div className="mb-8">
+                    {/* <div className="mb-8">
                         <ImageGalleryInline images={images} slug={slug} />
-                    </div>
+                    </div>   */}
 
                     {images.map((img) => {
                         const imageProps = {

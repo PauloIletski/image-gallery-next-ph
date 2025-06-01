@@ -75,11 +75,6 @@ export default async function HomePage() {
                                 <h2 className="w-full text-center text-lg font-bold text-white drop-shadow-lg mb-1">
                                     {capitalizeTitle(folder.slug)}
                                 </h2>
-                                {folder.createdAt && (
-                                    <p className="w-full text-center text-sm text-white/80">
-                                        {formatDate(folder.createdAt)}
-                                    </p>
-                                )}
                             </div>
                         </div>
                     </Link>
