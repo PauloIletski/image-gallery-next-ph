@@ -1,21 +1,14 @@
-module.exports = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   images: {
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
-        pathname: '/**', // permite qualquer caminho
+        pathname: '/**',
       },
     ],
   },
-async rewrites() {
-  return [
-    {
-      source: '/galeria/:slug/p/:photoId',
-      destination: '/galeria/:slug?photoId=:photoId',
-    },
-  ];
-},
+}
 
-  
-};
+module.exports = nextConfig
