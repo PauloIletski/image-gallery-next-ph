@@ -26,6 +26,20 @@ yarn create next-app --example with-cloudinary with-cloudinary-app
 pnpm create next-app --example with-cloudinary with-cloudinary-app
 ```
 
+## Setup
+
+After cloning this repository install the required packages with `npm install`:
+
+```bash
+npm install
+```
+
+This will create a `node_modules` folder so TypeScript compilation with `npx tsc --noEmit` works without missing type definitions.
+
 ## References
 
 - Cloudinary API: https://cloudinary.com/documentation/transformation_reference
+
+## Google Drive access
+
+When running in this Codex environment, attempts to call the Google Drive API may fail with a **Domain forbidden** error. This is returned by the network proxy and indicates outbound connections to Google are blocked, not an issue with the service account credentials.
