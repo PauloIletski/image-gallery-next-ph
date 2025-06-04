@@ -26,6 +26,16 @@ yarn create next-app --example with-cloudinary with-cloudinary-app
 pnpm create next-app --example with-cloudinary with-cloudinary-app
 ```
 
+## Setup
+
+After cloning this repository install the required packages with `npm install`:
+
+```bash
+npm install
+```
+
+This will create a `node_modules` folder so TypeScript compilation with `npx tsc --noEmit` works without missing type definitions.
+
 ## References
 
 - Cloudinary API: https://cloudinary.com/documentation/transformation_reference
