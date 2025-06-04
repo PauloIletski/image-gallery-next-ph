@@ -1,5 +1,6 @@
 import { google, drive_v3 } from 'googleapis';
 import type { GalleryFolder, ImageProps } from '@/types/image';
+import { mockGalleryFolders, mockGalleryImages } from './mockData';
 
 export interface GoogleDriveFile {
     id: string;
@@ -102,7 +103,7 @@ export async function fetchGalleryStructure(
         return result;
     } catch (error) {
         console.error('Erro ao buscar estrutura de pastas:', error);
-        return [];
+        return mockGalleryFolders;
     }
 }
 
@@ -131,6 +132,6 @@ export async function getImagesFromFolder(
         }));
     } catch (error) {
         console.error('Erro ao buscar imagens do Google Drive:', error);
-        return [];
+        return mockGalleryImages.default || [];
     }
 }

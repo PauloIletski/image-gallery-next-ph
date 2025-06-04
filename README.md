@@ -41,3 +41,5 @@ This will create a `node_modules` folder so TypeScript compilation with `npx tsc
 ## Google Drive access
 
 When running in this Codex environment, attempts to call the Google Drive API may fail with a **Domain forbidden** error. This is returned by the network proxy and indicates outbound connections to Google are blocked, not an issue with the service account credentials.
+
+If this happens, the application falls back to a small set of mock albums and images defined under `src/utils/mockData.ts` so the gallery pages still render.
