@@ -18,11 +18,9 @@ export default function GalleryImage({ id, height, width, public_id, format, slu
     const router = useRouter()
     const isPortrait = height > width
 
-    // Verifica o rate limit antes de transformar a imagem
-    const canTransform = checkRateLimit()
-    const imageUrl = canTransform
-        ? `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/c_scale,w_720/${public_id}.${format}`
-        : `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${public_id}.${format}`
+    // Remover a verificação de rate limit daqui - ela deve ser feita apenas uma vez
+    // const canTransform = checkRateLimit()
+    const imageUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/c_scale,w_720/${public_id}.${format}`
 
     return (
         <div
@@ -46,13 +44,16 @@ export default function GalleryImage({ id, height, width, public_id, format, slu
                 />
                 <button
                     onClick={(e) => {
+                        e.preventDefault()
                         e.stopPropagation()
-                        downloadPhoto(
-                            `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${public_id}.${format}`,
-                            `${id}.jpg`
-                        )
+                        downloadPhoto(imageUrl, `${id}.jpg`)
                     }}
-                    className="absolute bottom-2 right-2 z-10 rounded-full bg-white p-2 text-black backdrop-blur-lg transition hover:bg-black/75 hover:text-white"
+                    onTouchEnd={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        downloadPhoto(imageUrl, `${id}.jpg`)
+                    }}
+                    className="absolute bottom-2 right-2 z-10 rounded-full bg-white p-2 text-black backdrop-blur-lg transition hover:bg-black/75 hover:text-white touch-manipulation"
                     title="Download"
                 >
                     <ArrowDownTrayIcon className="h-5 w-5" />

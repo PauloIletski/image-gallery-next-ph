@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-    title: 'Issacar Pictures BETA¹',
+    title: 'Issacar Church Imagens - Galeria',
     description: 'Visualização de galeria'
 }
 
