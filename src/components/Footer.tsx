@@ -32,7 +32,7 @@ export default function Footer() {
     },
     {
       name: 'Facebook',
-        url: 'https://www.facebook.com/adissacar',
+        url: 'https://www.facebook.com/ad.issacar.2025',
       icon: FaFacebook,
       color: 'bg-blue-600 hover:bg-blue-700'
     }
