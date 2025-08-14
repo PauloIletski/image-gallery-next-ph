@@ -44,7 +44,7 @@ export default function downloadPhoto(url: string, filename?: string) {
         window.open(url, '_blank');
       });
   } else {
-    // Para desktop, usar download direto
+
     const link = document.createElement("a");
     link.href = url;
     link.download = finalFilename;
