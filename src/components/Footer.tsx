@@ -75,7 +75,7 @@ export default function Footer() {
     return (
       <>
         {/* Botões flutuantes */}
-        <div className="fixed bottom-20 right-4 z-50 flex flex-col gap-3">
+            <div className="fixed bottom-20 left-4 z-50 flex flex-col gap-3">
           {/* Botão de compartilhar */}
           <button
             onClick={handleShare}
