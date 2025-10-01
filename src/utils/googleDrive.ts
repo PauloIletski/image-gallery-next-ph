@@ -4,17 +4,18 @@ type UploadArgs = {
   accessToken: string
   albumName: string
   fileName: string
-  fileBuffer: Buffer
+  fileBuffer: any
   mimeType: string
+  parentIdOverride?: string
 }
 
 export async function uploadToGoogleDrive(args: UploadArgs): Promise<any> {
-  const { accessToken, albumName, fileName, fileBuffer, mimeType } = args
+  const { accessToken, albumName, fileName, fileBuffer, mimeType, parentIdOverride } = args
   if (!accessToken) {
     return { success: false, message: 'Usuário não autenticado no Google' }
   }
 
-  const driveRootFolder = process.env.GDRIVE_ROOT_FOLDER || ''
+  const driveRootFolder = parentIdOverride || process.env.GDRIVE_ROOT_FOLDER || ''
 
   try {
     const albumFolderId = await ensureDriveFolder({ accessToken, folderName: albumName, parentId: driveRootFolder })
@@ -82,16 +83,16 @@ async function driveMultipartUpload({
   name: string
   mimeType: string
   parents?: string[]
-  fileBuffer: Buffer
+    fileBuffer: any
 }) {
   const boundary = 'xxxxxxxxxx' + Math.random().toString(16).slice(2)
   const meta = { name, parents }
   const delimiter = `\r\n--${boundary}\r\n`
   const closeDelimiter = `\r\n--${boundary}--`
   const metaPart = `Content-Type: application/json; charset=UTF-8\r\n\r\n` + JSON.stringify(meta)
-  const bodyStart = Buffer.from(delimiter + metaPart + '\r\n' + `--${boundary}\r\n` + `Content-Type: ${mimeType}\r\n\r\n`)
-  const bodyEnd = Buffer.from(closeDelimiter)
-  const multipartBody = Buffer.concat([bodyStart, fileBuffer, bodyEnd])
+  const bodyStart = Buffer.from(delimiter + metaPart + '\r\n' + `--${boundary}\r\n` + `Content-Type: ${mimeType}\r\n\r\n`) as any
+  const bodyEnd = Buffer.from(closeDelimiter) as any
+  const multipartBody = (Buffer as any).concat([bodyStart, fileBuffer, bodyEnd]) as any
 
   const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,parents', {
     method: 'POST',
@@ -100,7 +101,7 @@ async function driveMultipartUpload({
       'Content-Type': `multipart/related; boundary=${boundary}`,
       'Content-Length': String(multipartBody.length),
     },
-    body: multipartBody,
+    body: multipartBody as any,
   })
   if (!res.ok) throw new Error('Falha no upload do arquivo no Drive')
   return await res.json()

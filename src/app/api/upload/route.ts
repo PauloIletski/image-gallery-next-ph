@@ -14,6 +14,8 @@ export async function POST(req: Request) {
     const formData = await req.formData()
     const slug = String(formData.get('slug') || '').trim()
     const file = formData.get('file') as File | null
+    const backup = String(formData.get('backup') || '').toLowerCase() === 'true'
+    const driveParentId = String(formData.get('driveParentId') || '').trim()
     const root = process.env.CLOUDINARY_ROOT_FOLDER || 'galeries'
 
     if (!slug) {
@@ -41,22 +43,30 @@ export async function POST(req: Request) {
     })
 
     // Tentativa de upload paralelo/seguido ao Google Drive (opcional, depende de auth e deps)
+    // Tenta obter token do cookie de sessão como preferência
+    const cookieHeader = (req.headers.get('cookie') || '')
+    const cookieTokenMatch = cookieHeader.match(/(?:^|;\s*)g_access_token=([^;]+)/)
+    const cookieToken = cookieTokenMatch ? decodeURIComponent(cookieTokenMatch[1]) : ''
     const driveAuthHeader = req.headers.get('authorization') || ''
-    const accessToken = driveAuthHeader.startsWith('Bearer ')
+    const headerToken = driveAuthHeader.startsWith('Bearer ')
       ? driveAuthHeader.slice('Bearer '.length)
       : ''
+    const accessToken = cookieToken || headerToken
 
     let drive
-    try {
-      drive = await uploadToGoogleDrive({
-        accessToken,
-        albumName: slug,
-        fileName: (file as any).name || `${uploadResult.public_id}.${uploadResult.format}`,
-        fileBuffer: buffer,
-        mimeType: (file as any).type || 'image/jpeg',
-      })
-    } catch (e) {
-      drive = { success: false, message: 'Drive upload não configurado' }
+    if (backup) {
+      try {
+        drive = await uploadToGoogleDrive({
+          accessToken,
+          albumName: slug,
+          fileName: (file as any).name || `${uploadResult.public_id}.${uploadResult.format}`,
+          fileBuffer: buffer,
+          mimeType: (file as any).type || 'image/jpeg',
+          parentIdOverride: driveParentId || undefined,
+        })
+      } catch (e) {
+        drive = { success: false, message: 'Drive upload não configurado' }
+      }
     }
 
     return NextResponse.json({ success: true, cloudinary: uploadResult, drive })
