@@ -1,3 +1,5 @@
+import { isInstagramBrowser } from './detectInstagram'
+
 function forceDownload(blobUrl: string, filename: string) {
   let a: any = document.createElement("a");
   a.download = filename;
@@ -35,51 +37,52 @@ export default function downloadPhoto(
     finalFilename = filename || defaultFilename;
   }
 
-  // Verificar se é um dispositivo móvel
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  // Verificar se é o navegador do Instagram
+  const isInstagram = isInstagramBrowser();
 
-  if (isMobile) {
-    // Padrão Instagram: abrir a imagem diretamente no navegador padrão do celular
-    // Isso permite que o usuário use o menu do navegador (3 pontos) ou pressione e segure
-    // a imagem para salvá-la, seguindo o comportamento nativo do dispositivo
+  // Se estiver no navegador do Instagram, usar o padrão de abrir no navegador padrão
+  // Isso permite que o usuário use o menu do navegador (3 pontos) ou pressione e segure
+  // a imagem para salvá-la, seguindo o comportamento nativo do Instagram
+  if (isInstagram) {
     window.open(url, '_blank', 'noopener,noreferrer');
-  } else {
-    // Para desktop, garantir download automático usando fetch + blob
-    // Isso funciona mesmo com imagens de domínios externos (CORS)
-    fetch(url, {
-      mode: 'cors',
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error('Erro ao baixar a imagem');
-        }
-        return response.blob();
-      })
-      .then((blob) => {
-        const blobUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = finalFilename;
-        link.style.display = "none";
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        
-        // Limpar o blob URL após um delay
-        setTimeout(() => {
-          window.URL.revokeObjectURL(blobUrl);
-        }, 100);
-      })
-      .catch((err) => {
-        console.error('Erro no download:', err);
-        // Fallback: tentar download direto (pode não funcionar com CORS)
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = finalFilename;
-        link.style.display = "none";
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-      });
+    return;
   }
+
+  // Para todos os outros cenários (mobile ou desktop), fazer download automático
+  // Usar fetch + blob para garantir que funcione mesmo com imagens de domínios externos (CORS)
+  fetch(url, {
+    mode: 'cors',
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error('Erro ao baixar a imagem');
+      }
+      return response.blob();
+    })
+    .then((blob) => {
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = finalFilename;
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      // Limpar o blob URL após um delay
+      setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl);
+      }, 100);
+    })
+    .catch((err) => {
+      console.error('Erro no download:', err);
+      // Fallback: tentar download direto (pode não funcionar com CORS)
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = finalFilename;
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    });
 }
