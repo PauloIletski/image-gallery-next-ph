@@ -11,9 +11,10 @@ import { checkRateLimit } from '@/utils/cloudinaryRateLimit'
 
 type Props = ImageProps & {
     slug: string
+    order?: number
 }
 
-export default function GalleryImage({ id, height, width, public_id, format, slug, blurDataUrl }: Props) {
+export default function GalleryImage({ id, height, width, public_id, format, slug, blurDataUrl, order }: Props) {
     const [isLoading, setLoading] = useState(true)
     const router = useRouter()
     const isPortrait = height > width
@@ -46,12 +47,12 @@ export default function GalleryImage({ id, height, width, public_id, format, slu
                     onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
-                        downloadPhoto(imageUrl, `${id}.jpg`)
+                        downloadPhoto(imageUrl, undefined, slug, order)
                     }}
                     onTouchEnd={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
-                        downloadPhoto(imageUrl, `${id}.jpg`)
+                        downloadPhoto(imageUrl, undefined, slug, order)
                     }}
                     className="absolute bottom-2 right-2 z-10 rounded-full bg-white p-2 text-black backdrop-blur-lg transition hover:bg-black/75 hover:text-white touch-manipulation"
                     title="Download"

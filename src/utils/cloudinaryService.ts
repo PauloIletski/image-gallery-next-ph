@@ -17,7 +17,11 @@ class CloudinaryService {
         remaining: 500, // valor inicial padrão
         reset: Date.now() + 3600000 // 1 hora a partir de agora
     }
-    private CACHE_TTL = 5 * 60 * 1000 // 5 minutos em milissegundos
+    // Em modo de desenvolvimento/teste, usar cache mais longo para reduzir chamadas
+    private CACHE_TTL = process.env.NODE_ENV === 'development'
+        ? 60 * 60 * 1000 // 1 hora em desenvolvimento
+        : 5 * 60 * 1000 // 5 minutos em produção
+    private USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true'
 
     constructor() {
         cloudinary.config({
@@ -76,20 +80,62 @@ class CloudinaryService {
     private async withCache<T>(key: string, operation: () => Promise<T>): Promise<T> {
         const cached = this.cache.get(key)
         if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+            if (process.env.NODE_ENV === 'development') {
+                console.log(`[CACHE HIT] Usando cache para: ${key}`)
+            }
             return cached.data
         }
 
-        const result = await operation()
-        this.cache.set(key, {
-            data: result,
-            timestamp: Date.now()
-        })
-        return result
+        if (process.env.NODE_ENV === 'development') {
+            console.log(`[CACHE MISS] Buscando dados do Cloudinary para: ${key}`)
+        }
+
+        try {
+            const result = await operation()
+            this.cache.set(key, {
+                data: result,
+                timestamp: Date.now()
+            })
+            return result
+        } catch (error: any) {
+            // Se houver erro de rate limit, tentar usar cache mesmo expirado
+            if (error.http_code === 420) {
+                console.warn('[RATE LIMIT] Rate limit atingido, tentando usar cache expirado')
+                if (cached) {
+                    return cached.data
+                }
+            }
+            throw error
+        }
     }
 
     // Busca imagens de uma galeria com cache e retry
     async getGalleryImages(slug: string) {
         const cacheKey = `gallery_${slug}`
+
+        // Em modo de teste, retornar dados mock se configurado
+        if (this.USE_MOCK_DATA) {
+            console.log(`[MOCK] Retornando dados mock para galeria: ${slug}`)
+            return {
+                resources: [
+                    {
+                        public_id: `galeries/${slug}/mock1`,
+                        format: 'jpg',
+                        height: 1080,
+                        width: 1920,
+                        created_at: new Date().toISOString()
+                    },
+                    {
+                        public_id: `galeries/${slug}/mock2`,
+                        format: 'jpg',
+                        height: 1920,
+                        width: 1080,
+                        created_at: new Date().toISOString()
+                    }
+                ],
+                headers: {}
+            }
+        }
 
         return this.withCache(cacheKey, async () => {
             return this.retryOperation(async () => {
@@ -109,6 +155,18 @@ class CloudinaryService {
     // Busca pastas com cache e retry
     async getGalleryFolders() {
         const cacheKey = 'gallery_folders'
+
+        // Em modo de teste, retornar dados mock se configurado
+        if (this.USE_MOCK_DATA) {
+            console.log('[MOCK] Retornando pastas mock')
+            return {
+                folders: [
+                    { name: 'test-album-1', path: 'galeries/test-album-1' },
+                    { name: 'test-album-2', path: 'galeries/test-album-2' }
+                ],
+                headers: {}
+            }
+        }
 
         return this.withCache(cacheKey, async () => {
             return this.retryOperation(async () => {

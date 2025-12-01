@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { 
   FaFacebook, 
   FaInstagram, 
@@ -11,6 +12,7 @@ import {
 
 export default function Footer() {
   const [isMobile, setIsMobile] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
     const checkMobile = () => {
@@ -53,19 +55,29 @@ export default function Footer() {
   ]
 
   const handleShare = async () => {
+    // Construir a URL correta baseada no pathname
+    // Se estiver na home, usar apenas a URL base
+    // Se estiver em um álbum, usar a URL do álbum sem query params
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+    const shareUrl = pathname === '/'
+      ? baseUrl
+      : `${baseUrl}${pathname}`
+
     if (navigator.share) {
       try {
         await navigator.share({
           title: 'Issacar Church - Galeria de Fotos',
-          text: 'Confira as fotos dos nossos cultos!',
-          url: window.location.href
+          text: pathname === '/'
+            ? 'Confira a galeria de fotos da Issacar Church!'
+            : 'Confira as fotos dos nossos cultos!',
+          url: shareUrl
         })
       } catch (error) {
         console.log('Erro ao compartilhar:', error)
       }
     } else {
       // Fallback para navegadores que não suportam Web Share API
-      navigator.clipboard.writeText(window.location.href)
+      navigator.clipboard.writeText(shareUrl)
       alert('Link copiado para a área de transferência!')
     }
   }

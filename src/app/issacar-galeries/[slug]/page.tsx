@@ -95,11 +95,12 @@ export default async function GalleryPage({ params }: PageProps) {
                         <ImageGalleryInline images={images} slug={slug} />
                     </div>   */}
 
-                    {images.map((img) => {
+                    {images.map((img, index) => {
                         const imageProps = {
                             ...img,
                             id: Number(img.id),
                             slug,
+                            order: index,
                             blurDataUrl: img.blurDataUrl || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
                         }
 
