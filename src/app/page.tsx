@@ -46,6 +46,12 @@ export default async function HomePage() {
                     >
                         Voltar ao site
                     </Link>
+                    <Link
+                        className="pointer z-10 mt-2 rounded-lg border border-white bg-white px-3 py-2 text-sm font-semibold text-black transition hover:bg-white/10 hover:text-white md:mt-2"
+                        href="/policies"
+                    >
+                        Políticas de Privacidade
+                    </Link>
                 </div>
 
                 {folders.map((folder: GalleryFolder) => (
