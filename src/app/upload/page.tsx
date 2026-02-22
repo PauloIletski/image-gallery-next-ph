@@ -258,7 +258,7 @@ export default function UploadPage() {
 
           <div className="grid gap-3">
             <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700" hidden={googleToken}>Login no Google é obrigatório para backup automático</div>
+              <div className="text-sm text-gray-700" hidden={!!googleToken}>Login no Google é obrigatório para backup automático</div>
               {!googleToken ? (
                 <button
                   type="button"

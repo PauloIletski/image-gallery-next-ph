@@ -66,6 +66,9 @@ importers:
       '@types/imagemin-jpegtran':
         specifier: ^5.0.4
         version: 5.0.4
+      '@types/js-cookie':
+        specifier: ^3.0.6
+        version: 3.0.6
       '@types/node':
         specifier: 18.11.9
         version: 18.11.9
@@ -566,6 +569,9 @@ packages:
 
   '@types/is-hotkey@0.1.10':
     resolution: {integrity: sha512-RvC8KMw5BCac1NvRRyaHgMMEtBaZ6wh0pyPTBu7izn4Sj/AX9Y4aXU5c7rX8PnM/knsuUpC1IeoBkANtxBypsQ==}
+
+  '@types/js-cookie@3.0.6':
+    resolution: {integrity: sha512-wkw9yd1kEXOPnvEeEV1Go1MmxtBJL0RR79aOTAApecWFVu7w0NNXNqhcWgvw2YgZDYadliXkl14pa3WXw5jlCQ==}
 
   '@types/lodash@4.17.23':
     resolution: {integrity: sha512-RDvF6wTulMPjrNdCoYRC8gNR880JNGT8uB+REUpC2Ns4pRqQJhGz90wh7rgdXDPpCczF3VGktDuFGVnz8zP7HA==}
@@ -2081,6 +2087,8 @@ snapshots:
       '@types/node': 18.11.9
 
   '@types/is-hotkey@0.1.10': {}
+
+  '@types/js-cookie@3.0.6': {}
 
   '@types/lodash@4.17.23': {}
 
