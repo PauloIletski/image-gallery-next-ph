@@ -1,9 +1,30 @@
+import Logo from "@/components/Icons/Logo";
+import Link from 'next/link'
+
 export default function PoliciesPage() {
   const updatedAt = "22 de fevereiro de 2026";
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-12 text-gray-900 dark:text-white">
-      <header className="mb-10">
+ <div className="flex flex-col sm:flex-row ls:flex-row xl:flex-row  justify-center sm:justify-start ls:justify-start xl:justify-start sm:items-start xl:items-start ls:items-start items-center gap-4 mb-10">
+       <div className="after:content relative mb-5 flex h-auto flex-col  gap-4 overflow-hidden rounded-lg bg-white/10 px-6 pb-16 text-center text-white shadow-highlight after:pointer-events-none after:absolute after:inset-0 after:rounded-lg after:shadow-highlight lg:pt-0">
+                          <div className="absolute inset-0 flex items-center justify-center opacity-20">
+                              <span className="absolute left-0 right-0 bottom-0 h-auto bg-gradient-to-b from-black/0 via-black to-black"></span>
+                          </div>
+                          <Logo className="relative  drop-shadow-xl" />
+                          <h1 className="text-base font-bold uppercase tracking-widest">
+                              Issacar Imagens
+                          </h1>
+        
+                          <Link
+                              className="pointer z-10 mt-6 rounded-lg border border-white bg-white px-3 py-2 text-sm font-semibold text-black transition hover:bg-white/10 hover:text-white md:mt-4"
+                              href="/"
+                          >
+                              Voltar 
+                          </Link>
+                      </div>
+      <div>
+ <header className="mb-10">
         <h1 className="text-3xl font-bold tracking-tight ">Politicas da Plataforma</h1>
         <p className="mt-2 text-sm text-gray-600 dark:text-white">Ultima atualizacao: {updatedAt}</p>
       </header>
@@ -78,6 +99,9 @@ export default function PoliciesPage() {
           </p>
         </article>
       </section>
+      </div>
+     
+      </div>
     </main>
   );
 }
