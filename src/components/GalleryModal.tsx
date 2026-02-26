@@ -1,11 +1,10 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Lightbox from 'yet-another-react-lightbox'
 import 'yet-another-react-lightbox/styles.css'
 import Zoom from 'yet-another-react-lightbox/plugins/zoom'
-import Download from 'yet-another-react-lightbox/plugins/download'
 import Thumbnails from 'yet-another-react-lightbox/plugins/thumbnails'
 import 'yet-another-react-lightbox/plugins/thumbnails.css'
 import type { ImageProps } from '@/utils/types'
@@ -22,6 +21,16 @@ export default function GalleryModal({ images, slug, photoId }: Props) {
     const index = Number(photoId)
     const [currentIndex, setCurrentIndex] = useState(index)
     const [isDownloading, setIsDownloading] = useState(false)
+
+    // Sincronizar o índice quando photoId mudar
+    useEffect(() => {
+        // Debug log para monitorar mudanças de photoId/index
+        if (typeof window !== 'undefined') {
+            // eslint-disable-next-line no-console
+            console.debug('[GalleryModal] photoId changed:', photoId, 'index:', index)
+        }
+        setCurrentIndex(index)
+    }, [photoId, index])
 
     const slides = images.map((image, order) => {
         // URL para visualização em alta qualidade
@@ -67,7 +76,7 @@ export default function GalleryModal({ images, slug, photoId }: Props) {
     return (
         <>
             <Lightbox
-                index={index}
+                index={currentIndex}
                 slides={slides}
                 open={true}
                 close={() => router.back()}
@@ -97,6 +106,21 @@ export default function GalleryModal({ images, slug, photoId }: Props) {
                 on={{
                     view: ({ index: viewIndex }) => {
                         setCurrentIndex(viewIndex)
+                        if (typeof window !== 'undefined') {
+                            // eslint-disable-next-line no-console
+                            console.debug('[GalleryModal] lightbox view change, viewIndex:', viewIndex)
+                        }
+
+                        // Atualizar o query param para refletir o slide atual
+                        try {
+                            const url = new URL(window.location.href)
+                            url.searchParams.set('photoId', String(viewIndex))
+                            // Usar replace para não poluir o histórico de navegação
+                            router.replace(url.pathname + url.search)
+                        } catch (err) {
+                            // eslint-disable-next-line no-console
+                            console.debug('[GalleryModal] não foi possível atualizar URL:', err)
+                        }
                     }
                 }}
             />

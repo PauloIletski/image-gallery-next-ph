@@ -6,12 +6,12 @@
 - Environments: .env
 
   Creating an optimized production build ...
-✓ Compiled successfully in 10.0s
+✓ Compiled successfully in 15.5s
   Running TypeScript ...
   Collecting page data using 7 workers ...
 [generateStaticParams] Iniciando geração de parâmetros estáticos...
 [getGalleryPaths] Iniciando busca de pastas...
-(node:15264) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(node:17096) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
 (Use `node --trace-deprecation ...` to show where the warning was created)
 [getGalleryPaths] 6 pastas encontradas: culto_lifes, culto_unidas, Domingo_dupla_honra_01, quinta_da_dupla_honra_03, Quinta_dupla_honra_01, Quinta_dupla_honra_02
 [generateStaticParams] Retornando 6 slugs: [
@@ -26,7 +26,7 @@
   Generating static pages using 7 workers (4/16) 
 [GalleryPage] Carregando galeria com slug: Quinta_dupla_honra_02
 [getGalleryPaths] Iniciando busca de pastas...
-(node:15290) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(node:17105) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
 (Use `node --trace-deprecation ...` to show where the warning was created)
 [getGalleryPaths] 6 pastas encontradas: culto_lifes, culto_unidas, Domingo_dupla_honra_01, quinta_da_dupla_honra_03, Quinta_dupla_honra_01, Quinta_dupla_honra_02
 [GalleryPage] Pastas disponíveis: Quinta_dupla_honra_02, Quinta_dupla_honra_01, quinta_da_dupla_honra_03, Domingo_dupla_honra_01, culto_unidas, culto_lifes
@@ -37,21 +37,16 @@
 [getGalleryPaths] 6 pastas encontradas: culto_lifes, culto_unidas, Domingo_dupla_honra_01, quinta_da_dupla_honra_03, Quinta_dupla_honra_01, Quinta_dupla_honra_02
 [GalleryPage] Pastas disponíveis: Quinta_dupla_honra_02, Quinta_dupla_honra_01, quinta_da_dupla_honra_03, Domingo_dupla_honra_01, culto_unidas, culto_lifes
 [getGalleryImages] Iniciando busca para slug: "Quinta_dupla_honra_01"
-[GalleryPage] Carregando galeria com slug: quinta_da_dupla_honra_03
-[getGalleryPaths] Iniciando busca de pastas...
-[getGalleryPaths] 6 pastas encontradas: culto_lifes, culto_unidas, Domingo_dupla_honra_01, quinta_da_dupla_honra_03, Quinta_dupla_honra_01, Quinta_dupla_honra_02
-[GalleryPage] Pastas disponíveis: Quinta_dupla_honra_02, Quinta_dupla_honra_01, quinta_da_dupla_honra_03, Domingo_dupla_honra_01, culto_unidas, culto_lifes
-[getGalleryImages] Iniciando busca para slug: "quinta_da_dupla_honra_03"
-[GalleryPage] Carregando galeria com slug: Domingo_dupla_honra_01
-[getGalleryPaths] Iniciando busca de pastas...
-[getGalleryPaths] 6 pastas encontradas: culto_lifes, culto_unidas, Domingo_dupla_honra_01, quinta_da_dupla_honra_03, Quinta_dupla_honra_01, Quinta_dupla_honra_02
-[GalleryPage] Pastas disponíveis: Quinta_dupla_honra_02, Quinta_dupla_honra_01, quinta_da_dupla_honra_03, Domingo_dupla_honra_01, culto_unidas, culto_lifes
-[getGalleryImages] Iniciando busca para slug: "Domingo_dupla_honra_01"
 [GalleryPage] Carregando galeria com slug: culto_unidas
 [getGalleryPaths] Iniciando busca de pastas...
 [getGalleryPaths] 6 pastas encontradas: culto_lifes, culto_unidas, Domingo_dupla_honra_01, quinta_da_dupla_honra_03, Quinta_dupla_honra_01, Quinta_dupla_honra_02
 [GalleryPage] Pastas disponíveis: Quinta_dupla_honra_02, Quinta_dupla_honra_01, quinta_da_dupla_honra_03, Domingo_dupla_honra_01, culto_unidas, culto_lifes
 [getGalleryImages] Iniciando busca para slug: "culto_unidas"
+[GalleryPage] Carregando galeria com slug: quinta_da_dupla_honra_03
+[getGalleryPaths] Iniciando busca de pastas...
+[getGalleryPaths] 6 pastas encontradas: culto_lifes, culto_unidas, Domingo_dupla_honra_01, quinta_da_dupla_honra_03, Quinta_dupla_honra_01, Quinta_dupla_honra_02
+[GalleryPage] Pastas disponíveis: Quinta_dupla_honra_02, Quinta_dupla_honra_01, quinta_da_dupla_honra_03, Domingo_dupla_honra_01, culto_unidas, culto_lifes
+[getGalleryImages] Iniciando busca para slug: "quinta_da_dupla_honra_03"
 [GalleryPage] Carregando galeria com slug: culto_lifes
 [getGalleryPaths] Iniciando busca de pastas...
 [getGalleryPaths] 6 pastas encontradas: culto_lifes, culto_unidas, Domingo_dupla_honra_01, quinta_da_dupla_honra_03, Quinta_dupla_honra_01, Quinta_dupla_honra_02
@@ -59,8 +54,13 @@
 [getGalleryImages] Iniciando busca para slug: "culto_lifes"
 [getGalleryPaths] Iniciando busca de pastas...
 [getGalleryPaths] 6 pastas encontradas: culto_lifes, culto_unidas, Domingo_dupla_honra_01, quinta_da_dupla_honra_03, Quinta_dupla_honra_01, Quinta_dupla_honra_02
+[GalleryPage] Carregando galeria com slug: Domingo_dupla_honra_01
+[getGalleryPaths] Iniciando busca de pastas...
+[getGalleryPaths] 6 pastas encontradas: culto_lifes, culto_unidas, Domingo_dupla_honra_01, quinta_da_dupla_honra_03, Quinta_dupla_honra_01, Quinta_dupla_honra_02
+[GalleryPage] Pastas disponíveis: Quinta_dupla_honra_02, Quinta_dupla_honra_01, quinta_da_dupla_honra_03, Domingo_dupla_honra_01, culto_unidas, culto_lifes
+[getGalleryImages] Iniciando busca para slug: "Domingo_dupla_honra_01"
   Generating static pages using 7 workers (12/16) 
-✓ Generating static pages using 7 workers (16/16) in 9.6s
+✓ Generating static pages using 7 workers (16/16) in 7.4s
   Finalizing page optimization ...
 
 Route (app)                                     Revalidate  Expire
