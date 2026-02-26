@@ -32,12 +32,15 @@ export async function getGalleryPaths(): Promise<GalleryFolder[]> {
       throw new Error('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME não configurado')
     }
 
+    console.log('[getGalleryPaths] Iniciando busca de pastas...')
     const { folders } = await cloudinaryService.getGalleryFolders()
 
     if (!folders || !Array.isArray(folders)) {
-      console.error('Nenhuma pasta encontrada ou resposta inválida do Cloudinary')
+      console.error('[getGalleryPaths] Nenhuma pasta encontrada ou resposta inválida do Cloudinary')
       return []
     }
+
+    console.log(`[getGalleryPaths] ${folders.length} pastas encontradas: ${folders.map(f => f.name).join(', ')}`)
 
     const foldersWithDetails = await Promise.all(
       folders.map(async (folder: any) => {
@@ -87,8 +90,11 @@ export async function getGalleryImages(slug: string): Promise<{ images: ImagePro
     }
 
     if (!slug) {
+      console.error('[getGalleryImages] Slug não fornecido. Type:', typeof slug, 'Value:', slug)
       throw new Error('Slug não fornecido')
     }
+
+    console.log(`[getGalleryImages] Iniciando busca para slug: "${slug}"`)
 
     // Buscar imagens (com cache e retry automático)
     const { resources } = await cloudinaryService.getGalleryImages(slug)

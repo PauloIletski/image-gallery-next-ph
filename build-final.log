@@ -1,0 +1,40 @@
+
+> build
+> next build
+
+▲ Next.js 16.1.4 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 6.7s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+[getGalleryPaths] Iniciando busca de pastas...
+(node:9484) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[getGalleryPaths] 6 pastas encontradas: culto_lifes, culto_unidas, Domingo_dupla_honra_01, quinta_da_dupla_honra_03, Quinta_dupla_honra_01, Quinta_dupla_honra_02
+  Generating static pages using 7 workers (0/16) ...
+  Generating static pages using 7 workers (4/16) 
+  Generating static pages using 7 workers (8/16) 
+[getGalleryPaths] Iniciando busca de pastas...
+[getGalleryPaths] 6 pastas encontradas: culto_lifes, culto_unidas, Domingo_dupla_honra_01, quinta_da_dupla_honra_03, Quinta_dupla_honra_01, Quinta_dupla_honra_02
+  Generating static pages using 7 workers (12/16) 
+✓ Generating static pages using 7 workers (16/16) in 304.1ms
+  Finalizing page optimization ...
+
+Route (app)                    Revalidate  Expire
+┌ ○ /                                  1m      1y
+├ ○ /_not-found
+├ ƒ /api/auth/google/callback
+├ ƒ /api/auth/google/logout
+├ ƒ /api/auth/google/start
+├ ƒ /api/drive/folders
+├ ƒ /api/upload
+├ ƒ /issacar-galeries/[slug]
+├ ○ /policies
+└ ○ /upload
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

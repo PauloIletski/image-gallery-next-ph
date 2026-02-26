@@ -9,36 +9,42 @@ import { Suspense } from 'react'
 import Footer from '@/components/Footer'
 
 type PageProps = {
-    params: { slug: string }
-    searchParams: { photoId?: string }
+    params: Promise<{ slug: string }>
+    searchParams?: Promise<{ photoId?: string }>
 }
 
 // Gera os caminhos estáticos para todas as galerias
 export async function generateStaticParams() {
     try {
+        console.log('[generateStaticParams] Iniciando geração de parâmetros estáticos...')
         const folders = await getGalleryPaths()
+        console.log(`[generateStaticParams] Retornando ${folders.length} slugs:`, folders.map(f => f.slug))
         return folders.map((folder: GalleryFolder) => ({
             slug: folder.slug
         }))
     } catch (error) {
-        console.error('Erro ao gerar parâmetros estáticos:', error)
+        console.error('[generateStaticParams] Erro ao gerar parâmetros estáticos:', error)
         return []
     }
 }
 
 export const revalidate = 60
 
-export default async function GalleryPage({ params }: PageProps) {
-    if (!params?.slug) {
-        console.error('Slug não fornecido')
+export default async function GalleryPage({ params, searchParams }: PageProps) {
+    // Em Next.js 16+, params e searchParams são Promises
+    const { slug } = await params
+    
+    if (!slug) {
+        console.error('[GalleryPage] Slug não fornecido em params')
         return notFound()
     }
 
     try {
-        const slug = params.slug
+        console.log(`[GalleryPage] Carregando galeria com slug: ${slug}`)
 
         // Primeiro, verifica se a pasta existe
         const folders = await getGalleryPaths()
+        console.log(`[GalleryPage] Pastas disponíveis: ${folders.map(f => f.slug).join(', ')}`)
         const isValidSlug = folders.some(folder => folder.slug === slug)
 
         if (!isValidSlug) {

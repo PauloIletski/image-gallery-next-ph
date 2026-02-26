@@ -1,0 +1,47 @@
+
+> build
+> next build
+
+▲ Next.js 16.1.4 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 7.6s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+(node:6857) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+  Generating static pages using 7 workers (0/16) ...
+  Generating static pages using 7 workers (4/16) 
+Slug não fornecido
+  Generating static pages using 7 workers (8/16) 
+Slug não fornecido
+Slug não fornecido
+Slug não fornecido
+Slug não fornecido
+Slug não fornecido
+  Generating static pages using 7 workers (12/16) 
+✓ Generating static pages using 7 workers (16/16) in 377.8ms
+  Finalizing page optimization ...
+
+Route (app)                                     Revalidate  Expire
+┌ ○ /                                                   1m      1y
+├ ○ /_not-found
+├ ƒ /api/auth/google/callback
+├ ƒ /api/auth/google/logout
+├ ƒ /api/auth/google/start
+├ ƒ /api/drive/folders
+├ ƒ /api/upload
+├ ● /issacar-galeries/[slug]                            1m      1y
+│ ├ /issacar-galeries/Quinta_dupla_honra_02             1m      1y
+│ ├ /issacar-galeries/Quinta_dupla_honra_01             1m      1y
+│ ├ /issacar-galeries/quinta_da_dupla_honra_03          1m      1y
+│ └ [+3 more paths]
+├ ○ /policies
+└ ○ /upload
+
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
