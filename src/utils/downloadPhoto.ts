@@ -66,13 +66,16 @@ export default function downloadPhoto(
       link.download = finalFilename;
       link.style.display = "none";
       document.body.appendChild(link);
+      
+      // Usar evento de clique para garantir que funcione no mobile
       link.click();
-      link.remove();
-
-      // Limpar o blob URL após um delay
+      
+      // Remover o link e revogar o blob URL após um delay maior
+      // Importante no mobile: 500ms garante que o navegador iniciou o download
       setTimeout(() => {
+        link.remove();
         window.URL.revokeObjectURL(blobUrl);
-      }, 100);
+      }, 500);
     })
     .catch((err) => {
       console.error('Erro no download:', err);
