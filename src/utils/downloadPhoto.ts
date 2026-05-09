@@ -1,6 +1,6 @@
 import { isSocialMediaBrowser } from './detectInstagram'
 
-function getFilename(url: string, filename?: string, albumName?: string, order?: number) {
+export function getDownloadFilename(url: string, filename?: string, albumName?: string, order?: number) {
   if (albumName && order !== undefined) {
     const date = new Date()
     const dateStr = [
@@ -18,7 +18,7 @@ function getFilename(url: string, filename?: string, albumName?: string, order?:
   return filename || url.split('\\').pop()?.split('/').pop() || 'image.jpg'
 }
 
-function getAttachmentUrl(url: string, filename: string) {
+export function getAttachmentUrl(url: string, filename: string) {
   const filenameWithoutExtension = filename
     .replace(/\.[^.]+$/, '')
     .replace(/[^a-zA-Z0-9._-]/g, '_')
@@ -38,7 +38,7 @@ export default function downloadPhoto(
   albumName?: string,
   order?: number
 ) {
-  const finalFilename = getFilename(url, filename, albumName, order)
+  const finalFilename = getDownloadFilename(url, filename, albumName, order)
   const downloadUrl = getAttachmentUrl(url, finalFilename)
 
   if (isSocialMediaBrowser()) {

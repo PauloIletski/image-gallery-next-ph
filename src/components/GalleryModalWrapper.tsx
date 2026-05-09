@@ -21,10 +21,8 @@ export default function GalleryModalWrapper({ images, slug }: GalleryModalWrappe
 
     if (!photoId) return null
 
-    // Forçar remount do modal quando photoId mudar garantindo re-render
     return (
         <GalleryModal
-            key={photoId}
             images={images}
             slug={slug}
             photoId={photoId}
