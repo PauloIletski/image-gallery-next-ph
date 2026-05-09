@@ -28,7 +28,7 @@ export default function Footer() {
   const socialLinks = [
     {
         name: 'Instagram',
-        url: 'https://www.instagram.com/issacar.church',
+        url: 'https://www.instagram.com/issacarchurch',
         icon: FaInstagram,
         color: 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600'
     },

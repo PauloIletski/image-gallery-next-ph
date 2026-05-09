@@ -8,6 +8,13 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
     title: 'Issacar Church Imagens',
     description: 'Galeria de fotos da Issacar Church',
+    icons: {
+        icon: [
+            { url: '/icon.svg', type: 'image/svg+xml' },
+            { url: '/favicon.ico', type: 'image/x-icon' },
+        ],
+        shortcut: '/favicon.ico',
+    },
 }
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

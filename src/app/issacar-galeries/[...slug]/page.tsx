@@ -9,8 +9,16 @@ import { Suspense } from 'react'
 import Footer from '@/components/Footer'
 
 type PageProps = {
-    params: Promise<{ slug: string }>
+    params: Promise<{ slug: string[] }>
     searchParams?: Promise<{ photoId?: string }>
+}
+
+function getAlbumTitle(slug: string) {
+    const albumName = slug.split('/').pop() || slug
+
+    return albumName
+        .replace(/^\d+\./, '')
+        .replace(/[_-]/g, ' ')
 }
 
 // Gera os caminhos estáticos para todas as galerias
@@ -20,7 +28,7 @@ export async function generateStaticParams() {
         const folders = await getGalleryPaths()
         console.log(`[generateStaticParams] Retornando ${folders.length} slugs:`, folders.map(f => f.slug))
         return folders.map((folder: GalleryFolder) => ({
-            slug: folder.slug
+            slug: folder.slug.split('/')
         }))
     } catch (error) {
         console.error('[generateStaticParams] Erro ao gerar parâmetros estáticos:', error)
@@ -32,7 +40,8 @@ export const revalidate = 60
 
 export default async function GalleryPage({ params, searchParams }: PageProps) {
     // Em Next.js 16+, params e searchParams são Promises
-    const { slug } = await params
+    const { slug: slugSegments } = await params
+    const slug = slugSegments.map((segment) => decodeURIComponent(segment)).join('/')
     
     if (!slug) {
         console.error('[GalleryPage] Slug não fornecido em params')
@@ -83,8 +92,8 @@ export default async function GalleryPage({ params, searchParams }: PageProps) {
                         <h1 className="text-base font-bold uppercase tracking-widest">
                             Issacar Church Imagens
                         </h1>
-                        <h3 className="mt-2 text-base font-bold uppercase tracking-widest">
-                            Album: {slug.replace(/_/g, ' ')}
+                        <h3 className="mt-2 max-w-full break-words text-sm font-bold uppercase tracking-widest sm:text-base">
+                            Album: {getAlbumTitle(slug)}
                         </h3>
                         <p className="max-w-[40ch] text-white/75 sm:max-w-[32ch]">
                             <strong>Atenção:</strong> Para conseguir baixar as fotos do culto, <strong>utilize o navegador de seu celular</strong>

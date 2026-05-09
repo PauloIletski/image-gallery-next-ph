@@ -1,321 +1,669 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import Script from 'next/script'
-import { FaGoogle, FaFolderOpen } from 'react-icons/fa'
-import Cookies from 'js-cookie'
+import {
+  FaCheckCircle,
+  FaCloudUploadAlt,
+  FaExclamationCircle,
+  FaFolderOpen,
+  FaGoogle,
+  FaImages,
+  FaSpinner,
+  FaTimes,
+} from 'react-icons/fa'
 
-type GalleryOption = { value: string; label: string }
+type DriveFolder = {
+  id: string
+  name: string
+}
+
+type UploadResult = {
+  success?: boolean
+  error?: string
+  drive?: {
+    success?: boolean
+    message?: string
+  }
+}
+
+type StatusType = 'idle' | 'success' | 'error' | 'warning'
+
+type AlbumOrderInfo = {
+  count: number
+  driveWarning?: string
+  folders: string[]
+  nextOrder: number
+}
+
+const MONTHS = [
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
+]
+
+const formatFileSize = (size: number) => {
+  if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`
+  return `${(size / 1024 / 1024).toFixed(1)} MB`
+}
+
+const normalizeFolderName = (value: string) => {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\\/]/g, '-')
+    .replace(/[^a-zA-Z0-9._ -]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .toLowerCase()
+}
+
+const formatFolderPreview = (folders: string[]) => {
+  const visibleFolders = folders.slice(0, 4).join(', ')
+  const remaining = folders.length - 4
+
+  return remaining > 0 ? `${visibleFolders} e mais ${remaining}` : visibleFolders
+}
+
+const currentDate = new Date()
 
 export default function UploadPage() {
-  const [slug, setSlug] = useState<string>("")
-  const [files, setFiles] = useState<FileList | null>(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const [progress, setProgress] = useState<number>(0)
-  const [message, setMessage] = useState<string>("")
-  const [galleries, setGalleries] = useState<GalleryOption[]>([])
-  const [googleToken, setGoogleToken] = useState<string>("")
-  const [backup, setBackup] = useState<boolean>(true)
-  const [driveParentId, setDriveParentId] = useState<string>("")
-  const [driveParentName, setDriveParentName] = useState<string>("")
-  const [driveFolders, setDriveFolders] = useState<Array<{ id: string; name: string }>>([])
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [year, setYear] = useState(String(currentDate.getFullYear()))
+  const [month, setMonth] = useState(String(currentDate.getMonth() + 1))
+  const [order, setOrder] = useState('')
+  const [albumName, setAlbumName] = useState('')
+  const [files, setFiles] = useState<File[]>([])
   const [isDragging, setIsDragging] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [status, setStatus] = useState<{ type: StatusType; text: string }>({
+    type: 'idle',
+    text: '',
+  })
+  const [isConnected, setIsConnected] = useState(false)
+  const [isCheckingGoogle, setIsCheckingGoogle] = useState(true)
+  const [driveFolders, setDriveFolders] = useState<DriveFolder[]>([])
+  const [driveParentId, setDriveParentId] = useState('')
+  const [hasConfiguredDriveRoot, setHasConfiguredDriveRoot] = useState(false)
+  const [isLoadingOrder, setIsLoadingOrder] = useState(false)
+  const [orderInfo, setOrderInfo] = useState<AlbumOrderInfo | null>(null)
+
+  const albumPath = useMemo(() => {
+    const normalizedYear = year.trim()
+    const monthIndex = Number(month) - 1
+    const monthName = MONTHS[monthIndex] || ''
+    const normalizedOrder = order.trim().replace(/[^0-9]/g, '')
+    const normalizedAlbumName = normalizeFolderName(albumName)
+
+    if (!normalizedYear || !monthName || !normalizedOrder || !normalizedAlbumName) return ''
+
+    return `${normalizedYear}/${month}.${monthName}/${normalizedOrder}.${normalizedAlbumName}`
+  }, [albumName, month, order, year])
+
+  const cloudinaryAlbumPath = useMemo(() => {
+     const normalizedOrder = order.trim().replace(/[^0-9]/g, '')
+    const normalizedAlbumName = normalizeFolderName(albumName)
+
+     if (!normalizedOrder || !normalizedAlbumName) return ''
 
 
-  // Login Google via OAuth backend (cookies httpOnly)
-  const loginWithGoogle = async () => {
-     window.location.href = '/api/auth/google/start'  
-  }
-
-  // const authGoogle = async () => {
-  //    const google = (window as any).google
-  //   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
-  
-  //   if (!clientId) {
-  //     setMessage('Configure NEXT_PUBLIC_GOOGLE_CLIENT_ID')
-  //     return
-  //   }
-
-  //   // Obter token de acesso apenas para o Picker (cliente)
-  //   const token = await new Promise<string>((resolve, reject) => {
-  //     if (!google?.accounts?.oauth2) return reject(new Error('SDK do Google não carregado'))
-  //     // @ts-ignore
-  //     const client = google.accounts.oauth2.initTokenClient({
-  //       client_id: clientId,
-  //       scope: 'https://www.googleapis.com/auth/drive',
-  //       callback: (resp: any) => {
-  //         if (resp?.access_token) resolve(resp.access_token)
-  //         else reject(new Error('Falha ao obter token'))
-  //       },
-  //     })
-  //     client.requestAccessToken()
-
-  //   })
-
-  //   setGoogleToken(token)
-  //   setMessage('')
-
-  // }
-
-
-  // Picker do Google para selecionar pasta
-  const openGoogleFolderPicker = async () => {
     
-    const gapi = (window as any).gapi
- 
-    await new Promise<void>((resolve) => {
-      if (gapi?.load) {
-        gapi.load('picker', { callback: () => resolve() })
-      } else {
-        resolve()
-      }
-    })
+    return `${normalizedOrder}.${normalizedAlbumName}`
+  }, [albumName, order])
 
-    // @ts-ignore
-    const googleNS = (window as any).google
-    if (!googleNS?.picker) {
-      setMessage('Google Picker não disponível')
-      return
-    }
+  const needsDriveFolderSelection = isConnected && !hasConfiguredDriveRoot
+  const selectedDriveFolderName = driveFolders.find((folder) => folder.id === driveParentId)?.name
+  const canSubmit = Boolean(
+    albumPath
+      && files.length > 0
+      && !isUploading
+      && isConnected
+      && (!needsDriveFolderSelection || driveParentId)
+  )
 
-    // @ts-ignore
-    const view = new googleNS.picker.DocsView(googleNS.picker.ViewId.DOCS)
-      .setIncludeFolders(true)
-      .setSelectFolderEnabled(true)
-      .setMimeTypes('application/vnd.google-apps.folder')
-    // @ts-ignore
-    const picker = new googleNS.picker.PickerBuilder()
-      .enableFeature(googleNS.picker.Feature.SIMPLE_UPLOAD_DISABLED)
-      .setAppId('')
-      .setOAuthToken(googleToken)
-      .addView(view)
-      .setCallback((data: any) => {
-        if (data?.action === 'picked' && data?.docs?.length) {
-          const picked = data.docs[0]
-          setDriveParentId(picked.id)
-          setDriveParentName(picked.name || '')
-        }
-      })
-      .build()
-    picker.setVisible(true)
-  }
-
-  // useEffect(() => {
-  //   const loadSlugs = async () => {
-  //     try {
-  //       const res = await fetch('/data/gallerySlugs.json', { cache: 'no-store' })
-  //       if (!res.ok) return
-  //       const data: string[] = await res.json()
-  //       setGalleries(data.map((s) => ({ value: s, label: s.replace(/_/g, ' ') })))
-  //     } catch {}
-  //   }
-  //   loadSlugs()
-  // }, [])
-
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFiles(e.target.files)
-  }
-
-  const onDropFiles = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(false)
-    const dropped = e.dataTransfer?.files
-    if (!dropped || dropped.length === 0) return
-    const current = files ? Array.from(files) : []
-    const combined = [...current, ...Array.from(dropped)]
-    const dataTransfer = new DataTransfer()
-    combined.forEach((f) => dataTransfer.items.add(f))
-    setFiles(dataTransfer.files)
-  }
-
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setMessage("")
-    if (!slug || !files || files.length === 0) {
-      setMessage('Selecione uma galeria e ao menos um arquivo')
-      return
-    }
-    if (!googleToken) {
-      setMessage('Faça login no Google para realizar o upload com backup automático')
-      return
-    }
-    if (!driveParentId) {
-      setMessage('Selecione a pasta de destino no Google Drive')
-      return
-    }
-    setIsUploading(true)
-    setProgress(0)
-
-    let uploaded = 0
-    for (const file of Array.from(files)) {
-      const form = new FormData()
-      form.append('slug', slug)
-      form.append('file', file)
-      form.append('backup', 'true')
-      if (driveParentId) form.append('driveParentId', driveParentId)
-      form.append('googleToken', googleToken)
-
-      const res = await fetch('/api/upload', { method: 'POST', body: form })
-      if (!res.ok) {
-        setMessage('Falha ao enviar um ou mais arquivos')
-        setIsUploading(false)
+  const checkGoogleConnection = async () => {
+    setIsCheckingGoogle(true)
+    try {
+      const res = await fetch('/api/drive/folders', { cache: 'no-store' })
+      if (res.status === 401) {
+        setIsConnected(false)
+        setDriveFolders([])
+        setDriveParentId('')
+        setHasConfiguredDriveRoot(false)
         return
       }
-      uploaded += 1
-      setProgress(Math.round((uploaded / files.length) * 100))
-    }
 
-    setIsUploading(false)
-    setMessage('Upload concluído com sucesso')
+      if (!res.ok) {
+        throw new Error('Não foi possível carregar as pastas do Google Drive')
+      }
+
+      const data = await res.json()
+      const hasConfiguredRoot = Boolean(data.hasConfiguredRoot)
+      const folders = Array.isArray(data.files) ? data.files : []
+      setIsConnected(true)
+      setHasConfiguredDriveRoot(hasConfiguredRoot)
+
+      if (hasConfiguredRoot) {
+        setDriveFolders([])
+        setDriveParentId('')
+        return
+      }
+
+      setDriveFolders(folders)
+      setDriveParentId((current) => current || folders[0]?.id || '')
+    } catch (error) {
+      setStatus({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Não foi possível carregar as pastas do Google Drive',
+      })
+    } finally {
+      setIsCheckingGoogle(false)
+    }
   }
 
-  useEffect(()=>{
-    const authCookie= Cookies.get('g_access_token_client')
+  useEffect(() => {
+    checkGoogleConnection()
+  }, [])
 
-    if (authCookie) {
-      setGoogleToken(authCookie)
-      setMessage('')
+  const loadNextOrder = useCallback(async () => {
+    if (!year.trim() || !month) return
+    if (needsDriveFolderSelection && !driveParentId) return
+
+    setIsLoadingOrder(true)
+    try {
+      const params = new URLSearchParams({ year: year.trim(), month })
+      if (needsDriveFolderSelection && driveParentId) {
+        params.set('driveParentId', driveParentId)
+      }
+      const res = await fetch(`/api/galleries/next-order?${params.toString()}`, { cache: 'no-store' })
+
+      if (!res.ok) {
+        throw new Error('Não foi possível determinar a próxima ordem')
+      }
+
+      const data = (await res.json()) as AlbumOrderInfo
+      setOrderInfo(data)
+      setOrder(String(data.nextOrder))
+      if (data.driveWarning) {
+        setStatus({ type: 'warning', text: data.driveWarning })
+      }
+    } catch (error) {
+      setOrderInfo(null)
+      setStatus({
+        type: 'warning',
+        text: error instanceof Error ? error.message : 'Não foi possível determinar a próxima ordem',
+      })
+    } finally {
+      setIsLoadingOrder(false)
     }
-  },[])
+  }, [driveParentId, month, needsDriveFolderSelection, year])
+
+  useEffect(() => {
+    loadNextOrder()
+  }, [loadNextOrder])
+
+  const loginWithGoogle = () => {
+    window.location.href = '/api/auth/google/start'
+  }
+
+  const logoutGoogle = async () => {
+    await fetch('/api/auth/google/logout', { method: 'POST' })
+    setIsConnected(false)
+    setDriveFolders([])
+    setDriveParentId('')
+    setHasConfiguredDriveRoot(false)
+  }
+
+  const addFiles = (nextFiles: FileList | File[]) => {
+    const incoming = Array.from(nextFiles).filter((file) => file.type.startsWith('image/'))
+    setFiles((current) => {
+      const existing = new Set(current.map((file) => `${file.name}-${file.size}-${file.lastModified}`))
+      const merged = [...current]
+
+      for (const file of incoming) {
+        const key = `${file.name}-${file.size}-${file.lastModified}`
+        if (!existing.has(key)) merged.push(file)
+      }
+
+      return merged
+    })
+  }
+
+  const removeFile = (index: number) => {
+    setFiles((current) => current.filter((_, fileIndex) => fileIndex !== index))
+  }
+
+  const onSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+
+    if (!albumPath) {
+      setStatus({ type: 'error', text: 'Informe ano, mês, ordem e nome do álbum.' })
+      return
+    }
+
+    if (files.length === 0) {
+      setStatus({ type: 'error', text: 'Selecione ao menos uma imagem.' })
+      return
+    }
+
+    if (!isConnected) {
+      setStatus({ type: 'error', text: 'Faça login no Google para enviar com backup no Drive.' })
+      return
+    }
+
+    if (needsDriveFolderSelection && !driveParentId) {
+      setStatus({ type: 'error', text: 'Selecione a pasta raiz existente do Google Drive.' })
+      return
+    }
+
+    setIsUploading(true)
+    setProgress(0)
+    setStatus({ type: 'idle', text: '' })
+
+    let uploaded = 0
+    let driveFailures = 0
+
+    try {
+      for (const file of files) {
+        const form = new FormData()
+        form.append('slug', cloudinaryAlbumPath)
+        form.append('file', file)
+        if (!hasConfiguredDriveRoot && needsDriveFolderSelection) {
+          form.append('driveParentId', driveParentId)
+        }
+
+        const res = await fetch('/api/upload', { method: 'POST', body: form })
+        const data = (await res.json().catch(() => ({}))) as UploadResult
+
+        if (!res.ok || data.error) {
+          throw new Error(data.error || `Falha ao enviar ${file.name}`)
+        }
+
+        if (data.drive?.success === false) {
+          driveFailures += 1
+        }
+
+        uploaded += 1
+        setProgress(Math.round((uploaded / files.length) * 100))
+      }
+
+      setFiles([])
+      setStatus({
+        type: driveFailures > 0 ? 'warning' : 'success',
+        text: driveFailures > 0
+          ? 'Upload concluído no Cloudinary, mas alguns backups no Drive falharam.'
+          : 'Upload concluído com sucesso.',
+      })
+    } catch (error) {
+      setStatus({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Falha ao enviar as imagens.',
+      })
+    } finally {
+      setIsUploading(false)
+    }
+  }
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10">
-      {/* Scripts necessários para Picker (GIS + gapi) */}
-      <Script src="https://accounts.google.com/gsi/client" async defer />
-      <Script src="https://apis.google.com/js/api.js" async defer />
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Upload de Imagens</h1>
-        <Link href="/" className="text-sm text-blue-600 hover:underline">Voltar</Link>
-      </div>
-
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <form onSubmit={onSubmit} className="grid gap-6">
-          <div className="grid gap-2">
-            <label className="text-sm font-medium">Nome do Álbum (obrigatório)</label>
-            <input
-              type="text"
-              placeholder="ex: culto_domingo_2025_09_28"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-gray-400 focus:outline-none"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value.trim())}
-              required
-            />
-            {galleries.length > 0 && (
-              <p className="text-xs text-gray-500">Sugestões existentes: {galleries.slice(0, 6).map(g => g.label).join(', ')}{galleries.length > 6 ? '…' : ''}</p>
-            )}
+    <main className="min-h-screen overflow-x-hidden bg-neutral-950 px-4 py-6 text-white sm:px-6 lg:px-8">
+      <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)]">
+        <section className="min-w-0">
+          <div className="mb-6 flex flex-col gap-4 border-b border-white/10 pb-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-white/45">Issacar Imagens</p>
+              <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">Upload de imagens</h1>
+            </div>
+            <Link
+              href="/"
+              className="inline-flex h-10 items-center justify-center rounded-md border border-white/15 px-4 text-sm font-medium text-white/80 transition hover:border-white/40 hover:text-white"
+            >
+              Voltar
+            </Link>
           </div>
 
-          {/* Campo de token removido: login agora ocorre automaticamente ao habilitar backup */}
+          <form onSubmit={onSubmit} className="grid gap-6">
+            <div className="grid gap-4 rounded-lg border border-white/10 bg-white/[0.04] p-4 sm:p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white/10">
+                  <FaFolderOpen className="h-4 w-4 text-white/75" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-white">Identificação do álbum</h2>
+                  <p className="text-xs text-white/45">A estrutura será criada no Cloudinary e no Google Drive.</p>
+                </div>
+              </div>
 
-          <div className="grid gap-3">
-            <label className="text-sm font-medium">Arquivos</label>
-            <div
-              className={`relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 text-center transition ${isDragging ? 'border-gray-900 bg-gray-50' : 'border-gray-300 hover:bg-gray-50'}`}
-              onClick={() => document.getElementById('file-input-hidden')?.click()}
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
-              onDragLeave={(e) => { e.preventDefault(); setIsDragging(false) }}
-              onDrop={onDropFiles}
-            >
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_180px]">
+                <div className="grid gap-2">
+                  <label htmlFor="album-year" className="text-sm font-medium text-white/85">
+                    Ano
+                  </label>
+                  <input
+                    id="album-year"
+                    type="number"
+                    min="2000"
+                    max="2100"
+                    className="h-11 rounded-md border border-white/15 bg-white px-3 text-base text-black outline-none transition placeholder:text-black/40 focus:border-white focus:ring-2 focus:ring-white/20"
+                    value={year}
+                    onChange={(event) => setYear(event.target.value)}
+                    disabled={isUploading}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <label htmlFor="album-month" className="text-sm font-medium text-white/85">
+                    Mês
+                  </label>
+                  <select
+                    id="album-month"
+                    value={month}
+                    onChange={(event) => setMonth(event.target.value)}
+                    disabled={isUploading}
+                    className="h-11 rounded-md border border-white/15 bg-white px-3 text-base text-black outline-none transition focus:border-white focus:ring-2 focus:ring-white/20"
+                  >
+                    {MONTHS.map((monthName, index) => (
+                      <option key={monthName} value={String(index + 1)}>
+                        {index + 1}.{monthName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid gap-2">
+                  <label htmlFor="album-order" className="text-sm font-medium text-white/85">
+                    Ordem
+                  </label>
+                  <div className="grid grid-cols-[minmax(0,1fr)_48px] gap-2">
+                    <input
+                      id="album-order"
+                      type="number"
+                      min="1"
+                      placeholder="1"
+                      className="h-11 min-w-0 flex-1 rounded-md border border-white/15 bg-white px-3 text-base text-black outline-none transition placeholder:text-black/40 focus:border-white focus:ring-2 focus:ring-white/20"
+                      value={order}
+                      onChange={(event) => setOrder(event.target.value)}
+                      disabled={isUploading || isLoadingOrder}
+                    />
+                    <button
+                      type="button"
+                      onClick={loadNextOrder}
+                      disabled={isUploading || isLoadingOrder}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-md border border-white/15 text-white/70 transition hover:border-white/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                      title="Recalcular ordem"
+                    >
+                      {isLoadingOrder ? <FaSpinner className="h-4 w-4 animate-spin" /> : '#'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <label htmlFor="album-name" className="text-sm font-medium text-white/85">
+                  Nome do álbum
+                </label>
+                <input
+                  id="album-name"
+                  type="text"
+                  placeholder="ex: culto domingo"
+                  className="h-11 rounded-md border border-white/15 bg-white px-3 text-base text-black outline-none transition placeholder:text-black/40 focus:border-white focus:ring-2 focus:ring-white/20"
+                  value={albumName}
+                  onChange={(event) => setAlbumName(event.target.value)}
+                  disabled={isUploading}
+                />
+              </div>
+
+              <div className="rounded-md border border-white/10 bg-black/30 px-3 py-2">
+                <p className="text-xs font-medium uppercase tracking-widest text-white/40">Pasta final</p>
+                <p className="mt-1 break-all font-mono text-sm text-white/80">
+                  {cloudinaryAlbumPath || 'ano/numero.Mês/ordem.nome-do-album'}
+                </p>
+                {orderInfo && (
+                  <p className="mt-2 text-xs text-white/45">
+                    {orderInfo.count === 0
+                      ? 'Nenhuma pasta encontrada neste mês. Ordem sugerida: 1.'
+                      : `${orderInfo.count} pasta(s) encontrada(s): ${formatFolderPreview(orderInfo.folders)}. Próxima ordem: ${orderInfo.nextOrder}.`}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-4 sm:p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white/10">
+                  <FaImages className="h-4 w-4 text-white/75" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-semibold text-white">Arquivos</h2>
+                  <p className="text-xs text-white/45">{files.length} arquivo(s) selecionado(s)</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                onDragOver={(event) => {
+                  event.preventDefault()
+                  setIsDragging(true)
+                }}
+                onDragLeave={(event) => {
+                  event.preventDefault()
+                  setIsDragging(false)
+                }}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  setIsDragging(false)
+                  addFiles(event.dataTransfer.files)
+                }}
+                disabled={isUploading}
+                className={`flex min-h-52 flex-col items-center justify-center rounded-md border border-dashed p-6 text-center transition ${
+                  isDragging
+                    ? 'border-white bg-white/15'
+                    : 'border-white/20 bg-black/30 hover:border-white/40 hover:bg-white/10'
+                } disabled:cursor-not-allowed disabled:opacity-60`}
+              >
+                <FaCloudUploadAlt className="mb-4 h-9 w-9 text-white/70" />
+                <span className="text-sm font-medium text-white">Arraste imagens aqui ou clique para selecionar</span>
+                <span className="mt-2 text-xs text-white/50">JPG, PNG, WEBP e outros formatos de imagem</span>
+              </button>
               <input
-                id="file-input-hidden"
+                ref={inputRef}
                 type="file"
                 multiple
                 accept="image/*"
                 className="hidden"
-                onChange={onFileChange}
+                onChange={(event) => {
+                  if (event.target.files) addFiles(event.target.files)
+                  event.target.value = ''
+                }}
               />
-              <div className="text-sm text-gray-600">
-                Arraste e solte suas imagens aqui ou
-                <span className="mx-1 inline-flex items-center rounded-md bg-gray-900 px-2 py-1 text-white">clique para selecionar</span>
-              </div>
-              <div className="mt-2 text-xs text-gray-500">Formatos suportados: JPG, PNG, WEBP • Vários arquivos</div>
             </div>
-            {files && files.length > 0 && (
-              <div className="rounded-lg border border-gray-200">
-                <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
-                  <span className="text-sm font-medium text-gray-700">Selecionados: {files.length}</span>
+
+            {files.length > 0 && (
+              <div className="overflow-hidden rounded-lg border border-white/10 bg-white/5">
+                <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+                  <span className="text-sm font-medium">{files.length} arquivo(s) selecionado(s)</span>
                   <button
                     type="button"
-                    onClick={() => setFiles(null)}
-                    className="text-xs text-gray-600 underline hover:text-gray-800"
+                    onClick={() => setFiles([])}
+                    disabled={isUploading}
+                    className="text-xs font-medium text-white/60 underline-offset-4 transition hover:text-white hover:underline disabled:opacity-50"
                   >
                     Limpar
                   </button>
                 </div>
-                <ul className="max-h-40 divide-y divide-gray-100 overflow-auto">
-                  {Array.from(files).map((f, idx) => (
-                    <li key={idx} className="flex items-center justify-between px-3 py-2 text-sm">
-                      <span className="truncate text-gray-700">{f.name}</span>
-                      <span className="ml-3 shrink-0 text-xs text-gray-500">{Math.round(f.size / 1024)} KB</span>
+                <ul className="max-h-64 divide-y divide-white/10 overflow-auto">
+                  {files.map((file, index) => (
+                    <li key={`${file.name}-${file.size}-${file.lastModified}`} className="flex min-w-0 items-center gap-3 px-4 py-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm text-white/90">{file.name}</p>
+                        <p className="text-xs text-white/45">{formatFileSize(file.size)}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        disabled={isUploading}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-white/50 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+                        aria-label={`Remover ${file.name}`}
+                      >
+                        <FaTimes className="h-3.5 w-3.5" />
+                      </button>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
-          </div>
 
-          <div className="grid gap-3">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700" hidden={!!googleToken}>Login no Google é obrigatório para backup automático</div>
-              {!googleToken ? (
-                <button
-                  type="button"
-                  onClick={loginWithGoogle}
-                  className="inline-flex items-center gap-2 rounded-md bg-gray-900 px-3 py-2 text-sm font-medium text-white shadow-sm ring-1 ring-black/5 hover:bg-black"
-                >
-                  <FaGoogle className="h-4 w-4" /> Entrar com Google
-                </button>
-              ) : (
-                <div className="inline-flex items-center gap-2 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-100">Conectado ao Google</div>
-              )}
-            </div>
-
-            <div className="grid gap-2">
-              <label className="text-sm text-black font-medium">Pasta de destino no Drive</label>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-2 rounded-md border text-black bg-gray border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 disabled:bg-red-500 disabled:text-gray-400"
-                  onClick={openGoogleFolderPicker}
-                  disabled={!googleToken}
-                >
-                  <FaFolderOpen className="h-4 w-4 text-black" /> Selecionar pasta no Google
-                </button>
-                {driveParentName && (
-                  <span className="text-sm text-gray-700">Selecionada: <span className="font-medium">{driveParentName}</span></span>
-                )}
+            {isUploading && (
+              <div className="grid gap-2">
+                <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full rounded-full bg-white transition-all" style={{ width: `${progress}%` }} />
+                </div>
+                <p className="text-xs text-white/50">{progress}% enviado</p>
               </div>
-            </div>
-          </div>
+            )}
 
-      {isUploading && (
-            <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+            {status.text && (
               <div
-                className="h-2 rounded-full bg-gray-800 transition-all"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          )}
+                className={`flex items-start gap-3 rounded-md border px-4 py-3 text-sm ${
+                  status.type === 'success'
+                    ? 'border-green-400/30 bg-green-400/10 text-green-100'
+                    : status.type === 'warning'
+                      ? 'border-yellow-400/30 bg-yellow-400/10 text-yellow-100'
+                      : 'border-red-400/30 bg-red-400/10 text-red-100'
+                }`}
+              >
+                {status.type === 'success' ? (
+                  <FaCheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                ) : (
+                  <FaExclamationCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                )}
+                <span>{status.text}</span>
+              </div>
+            )}
 
-          {message && (
-            <div className="text-sm text-gray-700">{message}</div>
-          )}
-
-          <div>
             <button
               type="submit"
-              disabled={isUploading || (backup && !googleToken)}
-              className="inline-flex items-center rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+              disabled={!canSubmit}
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-white px-5 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isUploading ? 'Enviando...' : 'Enviar imagens'}
+              {isUploading ? (
+                <>
+                  <FaSpinner className="h-4 w-4 animate-spin" />
+                  Enviando
+                </>
+              ) : (
+                'Enviar imagens'
+              )}
             </button>
+          </form>
+        </section>
+
+        <aside className="grid h-fit gap-4 lg:sticky lg:top-6">
+          <div className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-white/10">
+              <FaFolderOpen className="h-5 w-5 text-white/75" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold">Google Drive</h2>
+              <p className="break-words text-xs text-white/45">
+                {isCheckingGoogle ? 'Verificando conexão...' : isConnected ? 'Conta conectada' : 'Conta não conectada'}
+              </p>
+            </div>
           </div>
-        </form>
+
+          <div className="mt-5 grid gap-3">
+            {!isConnected ? (
+              <button
+                type="button"
+                onClick={loginWithGoogle}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-black transition hover:bg-white/90"
+              >
+                <FaGoogle className="h-4 w-4" />
+                Entrar com Google
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={checkGoogleConnection}
+                  disabled={isCheckingGoogle}
+                  className="inline-flex h-10 items-center justify-center rounded-md border border-white/15 px-4 text-sm font-medium text-white/80 transition hover:border-white/40 hover:text-white disabled:opacity-50"
+                >
+                  Verificar conexão
+                </button>
+                <button
+                  type="button"
+                  onClick={logoutGoogle}
+                  className="inline-flex h-10 items-center justify-center rounded-md px-4 text-sm font-medium text-white/55 transition hover:bg-white/10 hover:text-white"
+                >
+                  Desconectar
+                </button>
+              </>
+            )}
+          </div>
+          </div>
+
+          <div className="rounded-lg border border-white/10 bg-white/[0.04] p-5">
+            <div>
+              <p className="text-sm font-medium text-white">Backup obrigatório</p>
+              <p className="mt-1 text-xs text-white/50">
+                O envio só continua depois que o arquivo é salvo no Google Drive.
+              </p>
+            </div>
+
+            {needsDriveFolderSelection && (
+              <div className="mt-4 grid gap-2">
+                <label htmlFor="drive-folder" className="text-sm font-medium text-white/80">
+                  Pasta raiz existente no Drive
+                </label>
+                <select
+                  id="drive-folder"
+                  value={driveParentId}
+                  onChange={(event) => setDriveParentId(event.target.value)}
+                  disabled={isCheckingGoogle || isUploading || driveFolders.length === 0}
+                  className="h-11 min-w-0 rounded-md border border-white/15 bg-white px-3 text-sm text-black outline-none transition focus:border-white focus:ring-2 focus:ring-white/20 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <option value="">Selecione uma pasta</option>
+                  {driveFolders.map((folder) => (
+                    <option key={folder.id} value={folder.id}>
+                      {folder.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-white/45">
+                  Como não há uma raiz fixa configurada no servidor, esta pasta define onde o caminho abaixo será criado.
+                </p>
+              </div>
+            )}
+
+            <dl className="mt-4 grid gap-3 text-sm">
+              <div className="rounded-md border border-white/10 bg-black/30 px-3 py-2">
+                <dt className="text-xs font-medium uppercase tracking-widest text-white/40">Raiz do Drive</dt>
+                <dd className="mt-1 break-words text-white/80">
+                  {hasConfiguredDriveRoot ? 'albums' : selectedDriveFolderName || 'Aguardando seleção'}
+                </dd>
+              </div>
+              <div className="rounded-md border border-white/10 bg-black/30 px-3 py-2">
+                <dt className="text-xs font-medium uppercase tracking-widest text-white/40">Destino</dt>
+                <dd className="mt-1 break-all font-mono text-sm text-white/80">
+                  {albumPath || 'ano/numero.Mes/ordem.nome-do-album'}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </aside>
       </div>
     </main>
   )
 }
-
-

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { v2 as cloudinary } from 'cloudinary'
+import { applyGoogleTokenCookies, getGoogleAccessToken } from '@/utils/googleAuth'
 import { uploadToGoogleDrive } from '@/utils/googleDrive'
 
 cloudinary.config({
@@ -14,25 +15,64 @@ export async function POST(req: Request) {
     const formData = await req.formData()
     const slug = String(formData.get('slug') || '').trim()
     const file = formData.get('file') as File | null
-    const backup = String(formData.get('backup') || '').toLowerCase() === 'true'
     const driveParentId = String(formData.get('driveParentId') || '').trim()
     const root = process.env.CLOUDINARY_ROOT_FOLDER || 'galeries'
-    const googleToken = String(formData.get('googleToken')||'').trim() 
+    const googleToken = String(formData.get('googleToken') || '').trim()
 
     if (!slug) {
-      return NextResponse.json({ error: 'slug é obrigatório' }, { status: 400 })
+      return NextResponse.json({ error: 'slug e obrigatorio' }, { status: 400 })
     }
     if (!file) {
-      return NextResponse.json({ error: 'arquivo é obrigatório' }, { status: 400 })
+      return NextResponse.json({ error: 'arquivo e obrigatorio' }, { status: 400 })
+    }
+
+    const tokenResult = await getGoogleAccessToken(req, googleToken)
+    const accessToken = tokenResult.accessToken
+
+    if (!accessToken) {
+      return applyGoogleTokenCookies(NextResponse.json(
+        { error: 'Faca login no Google para manter o backup obrigatorio no Drive' },
+        { status: 401 }
+      ), tokenResult)
+    }
+
+    if (!driveParentId && !process.env.GDRIVE_ROOT_FOLDER) {
+      return applyGoogleTokenCookies(NextResponse.json(
+        { error: 'Selecione a pasta raiz existente do Google Drive' },
+        { status: 400 }
+      ), tokenResult)
     }
 
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
+    let drive
+    try {
+      drive = await uploadToGoogleDrive({
+        accessToken,
+        albumName: slug,
+        fileName: file.name || 'imagem',
+        fileBuffer: buffer,
+        mimeType: file.type || 'image/jpeg',
+        parentIdOverride: driveParentId || undefined,
+      })
+    } catch {
+      drive = { success: false, message: 'Drive upload nao configurado' }
+    }
+
+    if (!drive?.success) {
+      return applyGoogleTokenCookies(NextResponse.json(
+        { error: drive?.message || 'Falha ao criar backup obrigatorio no Drive', drive },
+        { status: 502 }
+      ), tokenResult)
+    }
+
     const uploadResult = await new Promise<any>((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
           folder: `${root}/${slug}`,
+          asset_folder: `${root}/${slug}`,
+          use_asset_folder_as_public_id_prefix: true,
           resource_type: 'image',
         },
         (error, result) => {
@@ -43,38 +83,9 @@ export async function POST(req: Request) {
       stream.end(buffer)
     })
 
-    // Tentativa de upload paralelo/seguido ao Google Drive (opcional, depende de auth e deps)
-    // Tenta obter token do cookie de sessão como preferência
-    const cookieHeader = (req.headers.get('cookie') || '')
-    const cookieTokenMatch = cookieHeader.match(/(?:^|;\s*)g_access_token=([^;]+)/)
-    const cookieToken = cookieTokenMatch ? decodeURIComponent(cookieTokenMatch[1]) : ''
-    const driveAuthHeader = req.headers.get('authorization') || ''
-    const headerToken = driveAuthHeader.startsWith('Bearer ')
-      ? driveAuthHeader.slice('Bearer '.length)
-      : ''
-    const accessToken = cookieToken || headerToken || googleToken 
-
-    let drive
-    if (backup) {
-      try {
-        drive = await uploadToGoogleDrive({
-          accessToken,
-          albumName: slug,
-          fileName: (file as any).name || `${uploadResult.public_id}.${uploadResult.format}`,
-          fileBuffer: buffer,
-          mimeType: (file as any).type || 'image/jpeg',
-          parentIdOverride: driveParentId || undefined,
-        })
-      } catch (e) {
-        drive = { success: false, message: 'Drive upload não configurado' }
-      }
-    }
-
-    return NextResponse.json({ success: true, cloudinary: uploadResult, drive })
-  } catch (error: any) {
+    return applyGoogleTokenCookies(NextResponse.json({ success: true, cloudinary: uploadResult, drive }), tokenResult)
+  } catch (error) {
     console.error('Erro no upload:', error)
     return NextResponse.json({ error: 'Falha no upload' }, { status: 500 })
   }
 }
-
-

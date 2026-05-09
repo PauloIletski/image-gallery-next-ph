@@ -15,7 +15,7 @@ interface DownloadButtonProps {
 export default function DownloadButton({ url, filename, public_id, format, id }: DownloadButtonProps) {
   const [isDownloading, setIsDownloading] = useState(false)
 
-  const handleDownload = async (e: React.MouseEvent | React.TouchEvent) => {
+  const handleDownload = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     
@@ -30,17 +30,15 @@ export default function DownloadButton({ url, filename, public_id, format, id }:
         `${id}.jpg`
       )
     } finally {
-      // Aguardar a conclusão do download antes de permitir novo clique
       setTimeout(() => {
         setIsDownloading(false)
-      }, 1000)
+      }, 300)
     }
   }
 
   return (
     <button
       onClick={handleDownload}
-      onTouchEnd={handleDownload}
       disabled={isDownloading}
       className="absolute bottom-2 right-2 z-10 rounded-full bg-white p-2 text-black backdrop-blur-lg transition hover:bg-black/75 hover:text-white touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed"
       title={isDownloading ? "Baixando..." : "Download"}

@@ -47,7 +47,7 @@ class CloudinaryService {
 
     // Verifica se pode fazer uma nova requisição
     private canMakeRequest(): boolean {
-        return this.rateLimitInfo.remaining > 0 && Date.now() >= this.rateLimitInfo.reset
+        return this.rateLimitInfo.remaining > 0 || Date.now() >= this.rateLimitInfo.reset
     }
 
     // Implementa retry logic com exponential backoff
@@ -138,23 +138,68 @@ class CloudinaryService {
         }
 
         return this.withCache(cacheKey, async () => {
-            return this.retryOperation(async () => {
-                const result = await cloudinary.search
-                    .expression(`folder:galeries/${slug}/*`)
-                    .sort_by('public_id', 'desc')
-                    .with_field('context')
-                    .max_results(400)
-                    .execute()
+            const folderPath = `galeries/${slug}`
+            const { resources } = await this.getGalleryResources()
+            const folderResources = Array.isArray(resources)
+                ? resources
+                    .filter((resource: any) => {
+                        const assetFolder = String(resource.asset_folder || resource.folder || '')
+                        const publicId = String(resource.public_id || '')
 
-                this.updateRateLimitInfo(result.headers || {})
-                return result
+                        return assetFolder === folderPath || publicId.startsWith(`${folderPath}/`)
+                    })
+                    .sort((a: any, b: any) => String(b.public_id).localeCompare(String(a.public_id)))
+                    .slice(0, 400)
+                : []
+
+            return { resources: folderResources }
+        })
+    }
+
+    async getGalleryResources(prefix = 'galeries/') {
+        const cacheKey = `gallery_resources_${prefix}`
+
+        return this.withCache(cacheKey, async () => {
+            return this.retryOperation(async () => {
+                const resources: any[] = []
+                let nextCursor: string | undefined
+
+                do {
+                    const search = cloudinary.search
+                        .expression('resource_type:image')
+                        .with_field('context')
+                        .max_results(500)
+
+                    if (nextCursor) {
+                        search.next_cursor(nextCursor)
+                    }
+
+                    const result = await search.execute()
+
+                    this.updateRateLimitInfo(result.headers || {})
+
+                    if (Array.isArray(result.resources)) {
+                        resources.push(
+                            ...result.resources.filter((resource: any) => {
+                                const assetFolder = String(resource.asset_folder || resource.folder || '')
+                                const publicId = String(resource.public_id || '')
+
+                                return assetFolder.startsWith(prefix.replace(/\/$/, '')) || publicId.startsWith(prefix)
+                            })
+                        )
+                    }
+
+                    nextCursor = result.next_cursor
+                } while (nextCursor)
+
+                return { resources }
             })
         })
     }
 
     // Busca pastas com cache e retry
-    async getGalleryFolders() {
-        const cacheKey = 'gallery_folders'
+    async getGalleryFolders(folderPath = 'galeries') {
+        const cacheKey = `gallery_folders_${folderPath}`
 
         // Em modo de teste, retornar dados mock se configurado
         if (this.USE_MOCK_DATA) {
@@ -170,7 +215,7 @@ class CloudinaryService {
 
         return this.withCache(cacheKey, async () => {
             return this.retryOperation(async () => {
-                const result = await cloudinary.api.sub_folders('galeries')
+                const result = await cloudinary.api.sub_folders(folderPath)
                 this.updateRateLimitInfo(result.headers || {})
                 return result
             })

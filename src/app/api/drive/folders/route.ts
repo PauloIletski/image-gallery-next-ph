@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { applyGoogleTokenCookies, getGoogleAccessToken } from '@/utils/googleAuth'
 
 export async function GET(req: NextRequest) {
-  const accessToken = req.cookies.get('g_access_token')?.value
+  const tokenResult = await getGoogleAccessToken(req)
+  const accessToken = tokenResult.accessToken
   if (!accessToken) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+
+  if (process.env.GDRIVE_ROOT_FOLDER) {
+    return applyGoogleTokenCookies(NextResponse.json({
+      files: [],
+      hasConfiguredRoot: true,
+    }), tokenResult)
+  }
 
   const qs = new URLSearchParams({
     q: "mimeType = 'application/vnd.google-apps.folder' and trashed = false",
@@ -12,11 +21,12 @@ export async function GET(req: NextRequest) {
   })
   const res = await fetch('https://www.googleapis.com/drive/v3/files?' + qs.toString(), {
     headers: { Authorization: `Bearer ${accessToken}` },
-    cache: 'no-store' as any,
+    cache: 'no-store',
   })
   if (!res.ok) return NextResponse.json({ error: 'Falha ao listar pastas' }, { status: 400 })
   const data = await res.json()
-  return NextResponse.json({ files: data.files || [] })
+  return applyGoogleTokenCookies(NextResponse.json({
+    files: data.files || [],
+    hasConfiguredRoot: Boolean(process.env.GDRIVE_ROOT_FOLDER),
+  }), tokenResult)
 }
-
-

@@ -6,7 +6,7 @@ export default function DownloadHelp() {
       <h3 className="font-bold mb-2">📱 Problemas com download no mobile?</h3>
       <ul className="space-y-1 text-xs">
         <li>• Chrome: Toque no ícone de escudo → Permitir pop-ups</li>
-        <li>• Safari: Configurações → Safari → Desativar "Bloquear Pop-ups"</li>
+        <li>• Safari: Configurações → Safari → Desativar &quot;Bloquear Pop-ups&quot;</li>
         <li>• Firefox: Toque no ícone de escudo → Permitir</li>
       </ul>
     </div>

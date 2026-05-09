@@ -18,7 +18,7 @@ export async function fetchGalleryImages(folder: string) {
     const images: ImageProps[] = [];
     let i = 0;
 
-    for (let result of results.resources) {
+    for (const result of results.resources) {
       const isPortrait = result.width < result.height;
       images.push({
         id: i++,

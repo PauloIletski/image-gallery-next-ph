@@ -8,8 +8,11 @@ import type { GalleryFolder } from '@/lib/get-gallery-images'
 export const revalidate = 60
 
 function capitalizeTitle(text: string): string {
-    return text
-        .split('_')
+    const albumName = text.split('/').pop() || text
+
+    return albumName
+        .replace(/^\d+\./, '')
+        .split(/[_-]/)
         .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(' ')
 }
@@ -73,13 +76,13 @@ export default async function HomePage() {
                                     height={720}
                                 />
                             ) : (
-                                <div className="flex h-full items-center justify-center">
-                                        <h2 className="text-2xl font-bold text-white">{capitalizeTitle(folder.slug)}</h2>
+                                <div className="flex h-full items-center justify-center p-4">
+                                        <h2 className="max-w-full break-words text-center text-xl font-bold text-white sm:text-2xl">{capitalizeTitle(folder.slug)}</h2>
                                 </div>
                             )}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                             <div className="absolute inset-0 flex flex-col items-end justify-end p-4">
-                                <h2 className="w-full text-center text-lg font-bold text-white drop-shadow-lg mb-1">
+                                <h2 className="mb-1 w-full break-words text-center text-base font-bold text-white drop-shadow-lg sm:text-lg">
                                     {capitalizeTitle(folder.slug)}
                                 </h2>
                             </div>

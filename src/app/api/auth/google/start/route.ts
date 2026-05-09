@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
+import { googleAuthCookieOptions } from '@/utils/googleAuth'
 
 function base64url(input: Buffer) {
   return input
@@ -35,9 +36,8 @@ export async function GET() {
   })
 
   const res = NextResponse.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`)
-  res.cookies.set('g_oauth_state', state, { httpOnly: true, secure: true, sameSite: 'lax', path: '/' })
-  res.cookies.set('g_oauth_verifier', verifier, { httpOnly: true, secure: true, sameSite: 'lax', path: '/' })
+  res.cookies.set('g_oauth_state', state, googleAuthCookieOptions)
+  res.cookies.set('g_oauth_verifier', verifier, googleAuthCookieOptions)
   return res
 }
-
 

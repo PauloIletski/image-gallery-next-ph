@@ -22,6 +22,7 @@ export default function GalleryImage({ id, height, width, public_id, format, slu
     // Remover a verificação de rate limit daqui - ela deve ser feita apenas uma vez
     // const canTransform = checkRateLimit()
     const imageUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/c_scale,w_720/${public_id}.${format}`
+    const downloadUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${public_id}.${format}`
 
     return (
         <div
@@ -47,12 +48,7 @@ export default function GalleryImage({ id, height, width, public_id, format, slu
                     onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
-                        downloadPhoto(imageUrl, undefined, slug, order)
-                    }}
-                    onTouchEnd={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        downloadPhoto(imageUrl, undefined, slug, order)
+                        downloadPhoto(downloadUrl, undefined, slug, order)
                     }}
                     className="absolute bottom-2 right-2 z-10 rounded-full bg-white p-2 text-black backdrop-blur-lg transition hover:bg-black/75 hover:text-white touch-manipulation"
                     title="Download"

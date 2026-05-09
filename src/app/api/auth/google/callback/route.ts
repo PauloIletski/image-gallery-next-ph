@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { googleAuthClientCookieOptions, googleAuthCookieOptions } from '@/utils/googleAuth'
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url)
@@ -40,17 +41,16 @@ export async function GET(req: NextRequest) {
   const tokens = await tokenRes.json()
 
   const res = NextResponse.redirect(process.env.GOOGLE_POST_LOGIN_REDIRECT || '/')
-  res.cookies.set('g_access_token', tokens.access_token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/' })
-  res.cookies.set('g_access_token_client', tokens.access_token, { secure: true, sameSite: 'lax', path: '/' })
+  res.cookies.set('g_access_token', tokens.access_token, googleAuthCookieOptions)
+  res.cookies.set('g_access_token_client', tokens.access_token, googleAuthClientCookieOptions)
   
   if (tokens.refresh_token) {
-    res.cookies.set('g_refresh_token', tokens.refresh_token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/' })
+    res.cookies.set('g_refresh_token', tokens.refresh_token, googleAuthCookieOptions)
   }
-  res.cookies.set('g_token_exp', String(Date.now() + (tokens.expires_in || 3600) * 1000), { httpOnly: true, secure: true, sameSite: 'lax', path: '/' })
+  res.cookies.set('g_token_exp', String(Date.now() + (tokens.expires_in || 3600) * 1000), googleAuthCookieOptions)
   // limpar cookies de estado/verifier
-  res.cookies.set('g_oauth_state', '', { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 0 })
-  res.cookies.set('g_oauth_verifier', '', { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 0 })
+  res.cookies.set('g_oauth_state', '', { ...googleAuthCookieOptions, maxAge: 0 })
+  res.cookies.set('g_oauth_verifier', '', { ...googleAuthCookieOptions, maxAge: 0 })
   return res
 }
-
 
