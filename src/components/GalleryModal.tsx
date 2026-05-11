@@ -8,7 +8,7 @@ import Zoom from 'yet-another-react-lightbox/plugins/zoom'
 import Thumbnails from 'yet-another-react-lightbox/plugins/thumbnails'
 import 'yet-another-react-lightbox/plugins/thumbnails.css'
 import type { ImageProps } from '@/utils/types'
-import { getAttachmentUrl, getDownloadFilename } from '@/utils/downloadPhoto'
+import { getDownloadApiUrl, getDownloadFilename } from '@/utils/downloadPhoto'
 
 type Props = {
     images: ImageProps[]
@@ -47,6 +47,8 @@ export default function GalleryModal({ images, slug, photoId }: Props) {
             width: Number(image.width),
             height: Number(image.height),
             download: downloadUrl,
+            publicId: image.public_id,
+            format: image.format,
             order,
             thumbnails: {
                 src: thumbnailUrl,
@@ -59,7 +61,9 @@ export default function GalleryModal({ images, slug, photoId }: Props) {
     const downloadFilename = currentSlide?.download
         ? getDownloadFilename(currentSlide.download, undefined, slug, currentSlide.order)
         : ''
-    const attachmentUrl = currentSlide?.download ? getAttachmentUrl(currentSlide.download, downloadFilename) : '#'
+    const downloadHref = currentSlide
+        ? getDownloadApiUrl(currentSlide.publicId, currentSlide.format, downloadFilename)
+        : '#'
 
     return (
         <>
@@ -112,9 +116,13 @@ export default function GalleryModal({ images, slug, photoId }: Props) {
                 }}
             />
             <a
-                href={attachmentUrl}
+                href={downloadHref}
                 download={downloadFilename}
-                onClick={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    window.location.href = downloadHref
+                }}
                 aria-label="Download"
                 rel="noopener noreferrer"
                 style={{

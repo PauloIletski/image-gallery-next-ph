@@ -6,8 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ImageProps } from '@/types/image'
 import { ArrowDownTrayIcon } from '@heroicons/react/24/solid'
-import { getAttachmentUrl, getDownloadFilename } from '@/utils/downloadPhoto'
-import { checkRateLimit } from '@/utils/cloudinaryRateLimit'
+import { getDownloadApiUrl, getDownloadFilename } from '@/utils/downloadPhoto'
 
 type Props = ImageProps & {
     slug: string
@@ -24,7 +23,7 @@ export default function GalleryImage({ id, height, width, public_id, format, slu
     const imageUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/c_scale,w_720/${public_id}.${format}`
     const downloadUrl = `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${public_id}.${format}`
     const downloadFilename = getDownloadFilename(downloadUrl, undefined, slug, order)
-    const attachmentUrl = getAttachmentUrl(downloadUrl, downloadFilename)
+    const downloadHref = getDownloadApiUrl(public_id, format, downloadFilename)
 
     return (
         <div
@@ -47,10 +46,12 @@ export default function GalleryImage({ id, height, width, public_id, format, slu
                     onLoad={() => setLoading(false)}
                 />
                 <a
-                    href={attachmentUrl}
+                    href={downloadHref}
                     download={downloadFilename}
                     onClick={(e) => {
+                        e.preventDefault()
                         e.stopPropagation()
+                        window.location.href = downloadHref
                     }}
                     rel="noopener noreferrer"
                     className="absolute bottom-2 right-2 z-10 rounded-full bg-white p-2 text-black backdrop-blur-lg transition hover:bg-black/75 hover:text-white touch-manipulation"

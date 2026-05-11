@@ -32,6 +32,16 @@ export function getAttachmentUrl(url: string, filename: string) {
   return url.replace('/image/upload/', `/image/upload/${attachmentFlag}/`)
 }
 
+export function getDownloadApiUrl(publicId: string, format: string, filename: string) {
+  const params = new URLSearchParams({
+    publicId,
+    format,
+    filename,
+  })
+
+  return `/api/download?${params.toString()}`
+}
+
 export default function downloadPhoto(
   url: string,
   filename?: string,
